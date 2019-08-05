@@ -1,3 +1,5 @@
+import Vue from 'vue/dist/vue.esm'  
+
   /* My Mind app*/
 
   if (!Function.prototype.bind) {
