@@ -44,6 +44,7 @@
   		return str;
   	}
   };
+  module.exports.MM = MM;
 
   /*
   	Any copyright is dedicated to the Public Domain.
