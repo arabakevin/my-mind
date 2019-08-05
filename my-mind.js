@@ -1,4 +1,4 @@
-import Vue from 'vue/dist/vue.esm'  
+
 
   /* My Mind app*/
 
@@ -12,7 +12,7 @@ import Vue from 'vue/dist/vue.esm'
   	}
   };
 
-  const MM = {
+  var MM = {
   	_subscribers: {},
 
   	publish: function(message, publisher, data) {
@@ -1285,7 +1285,8 @@ import Vue from 'vue/dist/vue.esm'
   	var map = MM.App.map;
   	var json = map.toJSON();
   	var data = MM.Format.JSON.to(json);
-  	Vue.set(IdeaNodes, 'nodeList', data);
+    var vue = require('vue/dist/vue.esm');
+  	vue.set(IdeaNodes, 'nodeList', data);
   }
 
   MM.Action.InsertNewItem = function(parent, index) {
