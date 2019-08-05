@@ -19,6 +19,6 @@
     "url": ""
   },
   "devDependencies": {
-    "vue": "^2.6.7",
+    "vue": "^2.6.7"
   }
 }
