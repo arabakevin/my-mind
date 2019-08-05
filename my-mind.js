@@ -12,7 +12,7 @@ import Vue from 'vue/dist/vue.esm'
   	}
   };
 
-  var MM = {
+  const MM = {
   	_subscribers: {},
 
   	publish: function(message, publisher, data) {
