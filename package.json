@@ -1,0 +1,24 @@
+{
+  "name": "mindmap",
+  "version": "1.0.0",
+  "description": "A tool to create mind map",
+  "main": "",
+  "scripts": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+"
+  },
+  "keywords": [
+    "vue",
+    "mindmap"
+  ],
+  "author": "araba kevin",
+  "license": "MIT",
+  "bugs": {
+    "url": ""
+  },
+  "devDependencies": {
+    "vue": "^2.3.4"
+  }
+}
