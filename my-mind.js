@@ -5347,4 +5347,3 @@
   		if (this.map) { this.map.ensureItemVisibility(this.current); }
   	}
   }
-}
