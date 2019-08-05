@@ -370,6 +370,7 @@ MM.Item.prototype.toJSON = function() {
 	}
 	
 	if (this._side) { data.side = this._side; }
+	if (this._parent) { data.parent_id = this._parent._id; }
 	if (this._color) { data.color = this._color; }
 	if (this._icon) { data.icon = this._icon; }
 	if (this._value) { data.value = this._value; }
@@ -724,6 +725,7 @@ MM.Item.prototype.removeChild = function(child) {
 	}
 	
 	return this.update();
+	MM.Action.ExportListNodes();
 }
 
 MM.Item.prototype.startEditing = function() {
@@ -774,6 +776,7 @@ MM.Item.prototype.handleEvent = function(e) {
 		case "click":
 			if (this._collapsed) { this.expand(); } else { this.collapse(); }
 			MM.App.select(this);
+			MM.Action.ExportListNodes();
 		break;
 	}
 }
@@ -835,6 +838,7 @@ MM.Item.prototype._updateIcon = function() {
         this._computed.icon = null;
         this._dom.icon.style.display = "none";
 	}
+	MM.Action.ExportListNodes();
 }
 
 MM.Item.prototype._updateValue = function() {
@@ -1272,10 +1276,18 @@ MM.Action.Multi.prototype.undo = function() {
 	});
 }
 
+MM.Action.ExportListNodes = function() {
+	var map = MM.App.map;
+	var json = map.toJSON();
+	var data = MM.Format.JSON.to(json);
+	Vue.set(IdeaNodes, 'nodeList', data);
+}
+
 MM.Action.InsertNewItem = function(parent, index) {
 	this._parent = parent;
 	this._index = index;
 	this._item = new MM.Item();
+	MM.Action.ExportListNodes();
 }
 MM.Action.InsertNewItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.InsertNewItem.prototype.perform = function() {
@@ -1291,6 +1303,7 @@ MM.Action.InsertNewItem.prototype.undo = function() {
 MM.Action.AppendItem = function(parent, item) {
 	this._parent = parent;
 	this._item = item;
+	MM.Action.ExportListNodes();
 }
 MM.Action.AppendItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.AppendItem.prototype.perform = function() {
@@ -1306,6 +1319,7 @@ MM.Action.RemoveItem = function(item) {
 	this._item = item;
 	this._parent = item.getParent();
 	this._index = this._parent.getChildren().indexOf(this._item);
+	MM.Action.ExportListNodes();
 }
 MM.Action.RemoveItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.RemoveItem.prototype.perform = function() {
@@ -1325,6 +1339,7 @@ MM.Action.MoveItem = function(item, newParent, newIndex, newSide) {
 	this._oldParent = item.getParent();
 	this._oldIndex = this._oldParent.getChildren().indexOf(item);
 	this._oldSide = item.getSide();
+	MM.Action.ExportListNodes();
 }
 MM.Action.MoveItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.MoveItem.prototype.perform = function() {
@@ -1404,6 +1419,7 @@ MM.Action.SetText = function(item, text) {
 	this._text = text;
 	this._oldText = item.getText();
 	this._oldValue = item.getValue(); /* adjusting text can also modify value! */
+	MM.Action.ExportListNodes();
 }
 MM.Action.SetText.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetText.prototype.perform = function() {
@@ -1420,6 +1436,7 @@ MM.Action.SetValue = function(item, value) {
 	this._item = item;
 	this._value = value;
 	this._oldValue = item.getValue();
+	MM.Action.ExportListNodes();
 }
 MM.Action.SetValue.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetValue.prototype.perform = function() {
@@ -1433,6 +1450,7 @@ MM.Action.SetStatus = function(item, status) {
 	this._item = item;
 	this._status = status;
 	this._oldStatus = item.getStatus();
+	MM.Action.ExportListNodes();
 }
 MM.Action.SetStatus.prototype = Object.create(MM.Action.prototype);
 MM.Action.SetStatus.prototype.perform = function() {
@@ -1674,6 +1692,7 @@ MM.Command.Undo.isValid = function() {
 MM.Command.Undo.execute = function() {
 	MM.App.history[MM.App.historyIndex-1].undo();
 	MM.App.historyIndex--;
+	MM.Action.ExportListNodes();
 }
 
 MM.Command.Redo = Object.create(MM.Command, {
@@ -4881,6 +4900,7 @@ MM.Mouse.handleEvent = function(e) {
 			var item = MM.App.map.getItemFor(e.target);
 			if (MM.App.editing && item == MM.App.current) { return; } /* ignore on edited node */
 			if (item) { MM.App.select(item); }
+			MM.Action.ExportListNodes();
 		break;
 
 		case "dblclick":
