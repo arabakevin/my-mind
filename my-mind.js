@@ -1281,6 +1281,14 @@
   	});
   }
 
+ 
+  MM.Action.serverRequest = function (query, callback){
+    setTimeout(function(){
+      var response = query + "full!";
+      callback(response);
+    },5000);
+  }
+
   MM.Action.ExportListNodes = function() {
   	var map = MM.App.map;
   	var json = map.toJSON();
