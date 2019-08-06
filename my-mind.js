@@ -1283,10 +1283,7 @@
 
  
   MM.Action.serverRequest = function (query, callback){
-    setTimeout(function(){
-      var response = query + "full!";
-      callback(response);
-    },5000);
+      callback(query);
   }
 
   MM.Action.ExportListNodes = function() {
@@ -1294,8 +1291,9 @@
   	var json = map.toJSON();
   	var data = MM.Format.JSON.to(json);
 //     var vue = require('vue/dist/vue.esm');
-    var moduleIdeas = require('javascripts/pages/ideas/show.js');
-  	moduleIdeas.exportDataToVue(data);
+  //  var moduleIdeas = require('javascripts/pages/ideas/show.js');
+  //	moduleIdeas.exportDataToVue(data);
+    MM.Action.serverRequest(data, getResults);
   }
 
   MM.Action.InsertNewItem = function(parent, index) {
