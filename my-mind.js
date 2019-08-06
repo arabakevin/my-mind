@@ -11,7 +11,7 @@ import Vue from 'vue/dist/vue.esm'
   	}
   };
 
-  export var MM = {
+  var MM = {
   	_subscribers: {},
 
   	publish: function(message, publisher, data) {
@@ -1286,8 +1286,8 @@ import Vue from 'vue/dist/vue.esm'
   	var json = map.toJSON();
   	var data = MM.Format.JSON.to(json);
 //     var vue = require('vue/dist/vue.esm');
-    var moduleIdeas = require('javascripts/pages/ideas/show.js');
-  	Vue.set(moduleIdeas.BuildIdeasShowPage.IdeaNodes, 'nodeList', data);
+//     var moduleIdeas = require('javascripts/pages/ideas/show.js');
+  	exportDataToVue(data);
   }
 
   MM.Action.InsertNewItem = function(parent, index) {
