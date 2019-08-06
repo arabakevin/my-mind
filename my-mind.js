@@ -1,4 +1,4 @@
-
+import Vue from 'vue/dist/vue.esm'
   /* My Mind app*/
 
   if (!Function.prototype.bind) {
@@ -1285,9 +1285,9 @@
   	var map = MM.App.map;
   	var json = map.toJSON();
   	var data = MM.Format.JSON.to(json);
-    var vue = require('vue/dist/vue.esm');
+//     var vue = require('vue/dist/vue.esm');
     var myModule = require('javascripts/pages/ideas/show.js');
-  	vue.set(myModule.BuildIdeasShowPage.IdeaNodes, 'nodeList', data);
+  	Vue.set(myModule.BuildIdeasShowPage.IdeaNodes, 'nodeList', data);
   }
 
   MM.Action.InsertNewItem = function(parent, index) {
