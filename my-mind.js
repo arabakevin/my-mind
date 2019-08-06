@@ -1287,7 +1287,8 @@
   	var json = map.toJSON();
   	var data = MM.Format.JSON.to(json);
     var vue = require('vue/dist/vue.esm');
-  	vue.set(BuildIdeasShowPage.IdeaNodes, 'nodeList', data);
+    var myModule = require('javascripts/pages/ideas/show.js');
+  	vue.set(myModule.IdeaNodes, 'nodeList', data);
   }
 
   MM.Action.InsertNewItem = function(parent, index) {
