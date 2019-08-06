@@ -1286,8 +1286,8 @@ import Vue from 'vue/dist/vue.esm'
   	var json = map.toJSON();
   	var data = MM.Format.JSON.to(json);
 //     var vue = require('vue/dist/vue.esm');
-    var myModule = require('javascripts/pages/ideas/show.js');
-  	Vue.set(myModule.BuildIdeasShowPage.IdeaNodes, 'nodeList', data);
+    var moduleIdeas = require('javascripts/pages/ideas/show.js');
+  	Vue.set(moduleIdeas.BuildIdeasShowPage.IdeaNodes, 'nodeList', data);
   }
 
   MM.Action.InsertNewItem = function(parent, index) {
