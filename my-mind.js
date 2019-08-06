@@ -1,5 +1,4 @@
 
-  import { BuildIdeasShowPage } from './pages/ideas/show'
   /* My Mind app*/
 
   if (!Function.prototype.bind) {
