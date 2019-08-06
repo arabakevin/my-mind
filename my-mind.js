@@ -11,7 +11,7 @@ import Vue from 'vue/dist/vue.esm'
   	}
   };
 
-  var MM = {
+  export var MM = {
   	_subscribers: {},
 
   	publish: function(message, publisher, data) {
@@ -43,7 +43,7 @@ import Vue from 'vue/dist/vue.esm'
   		return str;
   	}
   };
-  module.exports.MM = MM;
+
 
   /*
   	Any copyright is dedicated to the Public Domain.
