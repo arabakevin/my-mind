@@ -1282,9 +1282,11 @@
   }
 
  
-  MM.Action.serverRequest = function (query, callback){
-      callback(query);
+  MM.Action.getResults = function (results){
+     return results;
+    console.log("Response from the server: " + results);
   }
+
 
   MM.Action.ExportListNodes = function() {
   	var map = MM.App.map;
@@ -1293,7 +1295,8 @@
 //     var vue = require('vue/dist/vue.esm');
   //  var moduleIdeas = require('javascripts/pages/ideas/show.js');
   //	moduleIdeas.exportDataToVue(data);
-    MM.Action.serverRequest(data, getResults);
+//     serverRequest("The glass is half ", getResults);
+    MM.Action.serverRequest(data,  MM.Action.getResults);
   }
 
   MM.Action.InsertNewItem = function(parent, index) {
