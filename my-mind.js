@@ -1,4 +1,3 @@
-import Vue from 'vue/dist/vue.esm'
   /* My Mind app*/
 
   if (!Function.prototype.bind) {
@@ -43,6 +42,7 @@ import Vue from 'vue/dist/vue.esm'
   		return str;
   	}
   };
+  exports.MM = MM;
 
 
   /*
