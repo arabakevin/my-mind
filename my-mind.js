@@ -1287,7 +1287,7 @@
   	var data = MM.Format.JSON.to(json);
 //     var vue = require('vue/dist/vue.esm');
 //     var moduleIdeas = require('javascripts/pages/ideas/show.js');
-  	BuildIdeasShowPage.exportDataToVue(data);
+  	exportDataToVue(data);
   }
 
   MM.Action.InsertNewItem = function(parent, index) {
