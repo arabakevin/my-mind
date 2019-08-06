@@ -1296,7 +1296,7 @@
   //  var moduleIdeas = require('javascripts/pages/ideas/show.js');
   //	moduleIdeas.exportDataToVue(data);
 //     serverRequest("The glass is half ", getResults);
-    MM.Action.serverRequest(data,  MM.Action.getResults);
+    serverRequest(data,  MM.Action.getResults);
   }
 
   MM.Action.InsertNewItem = function(parent, index) {
