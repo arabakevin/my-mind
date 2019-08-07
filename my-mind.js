@@ -1281,8 +1281,8 @@
   	});
   }
 
-  MM.Action.onData = function(data){
-    return data;
+  MM.Action.onData = function(data, callbacks){
+    callbacks(data);
 //   MM.Action.getResults = function (results){
 //      return results;
 //     console.log("Response from the server: " + results);
