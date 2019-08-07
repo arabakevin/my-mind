@@ -1282,7 +1282,7 @@
   }
 
   MM.App.onData(data){
-    return data
+    return data;
 //   MM.Action.getResults = function (results){
 //      return results;
 //     console.log("Response from the server: " + results);
