@@ -1281,10 +1281,11 @@
   	});
   }
 
- 
-  MM.Action.getResults = function (results){
-     return results;
-    console.log("Response from the server: " + results);
+  MM.App.onData(data){
+    return data
+//   MM.Action.getResults = function (results){
+//      return results;
+//     console.log("Response from the server: " + results);
   }
 
 
@@ -1296,7 +1297,7 @@
   //  var moduleIdeas = require('javascripts/pages/ideas/show.js');
   //	moduleIdeas.exportDataToVue(data);
 //     serverRequest("The glass is half ", getResults);
-    serverRequest(data,  MM.Action.getResults);
+    MM.App.onData(data);
   }
 
   MM.Action.InsertNewItem = function(parent, index) {
