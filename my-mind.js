@@ -1281,7 +1281,7 @@
   	});
   }
 
-  MM.App.onData(data){
+  MM.Action.onData = function(data){
     return data;
 //   MM.Action.getResults = function (results){
 //      return results;
@@ -1297,7 +1297,7 @@
   //  var moduleIdeas = require('javascripts/pages/ideas/show.js');
   //	moduleIdeas.exportDataToVue(data);
 //     serverRequest("The glass is half ", getResults);
-    MM.App.onData(data);
+     MM.Action.onData(data);
   }
 
   MM.Action.InsertNewItem = function(parent, index) {
