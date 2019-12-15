@@ -327,6 +327,7 @@
   		content: document.createElement("div"),
   		status: document.createElement("span"),
   		icon: document.createElement("span"),
+      id: document.createElement("span"),
   		value: document.createElement("span"),
   		text: document.createElement("div"),
   		children: document.createElement("ul"),
@@ -351,6 +352,7 @@
   }
 
   MM.Item.COLOR = "#999";
+  MM.Item.NODE = "";
 
       /* RE explanation:
        *          _________________________________________________________________________ One of the three possible variants
@@ -375,6 +377,7 @@
 
   	if (this._side) { data.side = this._side; }
     if (this._parent) { data.parent_id = this._parent._id; }
+    if (this._id) { data.id = this._id; }
   	if (this._color) { data.color = this._color; }
   	if (this._icon) { data.icon = this._icon; }
   	if (this._value) { data.value = this._value; }
@@ -394,6 +397,7 @@
    */
   MM.Item.prototype.fromJSON = function(data) {
   	this.setText(data.text);
+    this.setId(data.id);
   	if (data.id) { this._id = data.id; }
   	if (data.side) { this._side = data.side; }
   	if (data.color) { this._color = data.color; }
@@ -433,6 +437,11 @@
   		this._icon = data.icon;
   		dirty = 1;
   	}
+
+    if (this.id != data.id) {
+      this._id = data.id;
+      dirty = 1;
+    }
 
   	if (this._value != data.value) {
   		this._value = data.value;
@@ -493,6 +502,8 @@
   	this.getMap().ensureItemVisibility(this);
   	MM.Clipboard.focus(); /* going to mode 2c */
   	MM.publish("item-select", this);
+    var callback = MM.Item.NODE
+    MM.App.map.SelectNode(this._id, this._dom.text.innerHTML, callback)
   }
 
   MM.Item.prototype.deselect = function() {
@@ -540,6 +551,13 @@
   	this._dom.text.innerHTML = text;
   	this._findLinks(this._dom.text);
   	return this.update();
+  }
+
+  MM.Item.prototype.setId = function(id) {
+    this._dom.id.innerHTML = id;
+    this._dom.id.style.display = "none";
+    this._findLinks(this._dom.id);
+    return this.update();
   }
 
   MM.Item.prototype.getId = function() {
@@ -1037,6 +1055,14 @@
   	this._moveTo(Math.round(left), Math.round(top));
 
   	return this;
+  }
+
+  MM.Map.prototype.onSelectNode = function(callback) {
+    MM.Item.NODE = callback
+  }
+
+  MM.Map.prototype.SelectNode = function(name, id, callback) {
+    if(callback) callback(name, id);
   }
 
   MM.Map.prototype.moveBy = function(dx, dy) {
@@ -1853,58 +1879,58 @@
   	MM.App.ui.toggle();
   }
 
-  MM.Command.Pan = Object.create(MM.Command, {
-  	label: {value: "Pan the map"},
-  	keys: {value: [
-  		{keyCode: "W".charCodeAt(0), ctrlKey:false, altKey:false, metaKey:false},
-  		{keyCode: "A".charCodeAt(0), ctrlKey:false, altKey:false, metaKey:false},
-  		{keyCode: "S".charCodeAt(0), ctrlKey:false, altKey:false, metaKey:false},
-  		{keyCode: "D".charCodeAt(0), ctrlKey:false, altKey:false, metaKey:false}
-  	]},
-  	chars: {value: []}
-  });
-  MM.Command.Pan.execute = function(e) {
-  	var ch = String.fromCharCode(e.keyCode);
-  	var index = this.chars.indexOf(ch);
-  	if (index > -1) { return; }
+  // MM.Command.Pan = Object.create(MM.Command, {
+  // 	label: {value: "Pan the map"},
+  // 	keys: {value: [
+  // 		{keyCode: "W".charCodeAt(0), ctrlKey:false, altKey:false, metaKey:false},
+  // 		{keyCode: "A".charCodeAt(0), ctrlKey:false, altKey:false, metaKey:false},
+  // 		{keyCode: "S".charCodeAt(0), ctrlKey:false, altKey:false, metaKey:false},
+  // 		{keyCode: "D".charCodeAt(0), ctrlKey:false, altKey:false, metaKey:false}
+  // 	]},
+  // 	chars: {value: []}
+  // });
+  // MM.Command.Pan.execute = function(e) {
+  // 	var ch = String.fromCharCode(e.keyCode);
+  // 	var index = this.chars.indexOf(ch);
+  // 	if (index > -1) { return; }
+  //
+  // 	if (!this.chars.length) {
+  // 		window.addEventListener("keyup", this);
+  // 		this.interval = setInterval(this._step.bind(this), 50);
+  // 	}
+  //
+  // 	this.chars.push(ch);
+  // 	this._step();
+  // }
 
-  	if (!this.chars.length) {
-  		window.addEventListener("keyup", this);
-  		this.interval = setInterval(this._step.bind(this), 50);
-  	}
+  // MM.Command.Pan._step = function() {
+  // 	var dirs = {
+  // 		"W": [0, 1],
+  // 		"A": [1, 0],
+  // 		"S": [0, -1],
+  // 		"D": [-1, 0]
+  // 	}
+  // 	var offset = [0, 0];
+  //
+  // 	this.chars.forEach(function(ch) {
+  // 		offset[0] += dirs[ch][0];
+  // 		offset[1] += dirs[ch][1];
+  // 	});
+  //
+  // 	MM.App.map.moveBy(15*offset[0], 15*offset[1]);
+  // }
 
-  	this.chars.push(ch);
-  	this._step();
-  }
-
-  MM.Command.Pan._step = function() {
-  	var dirs = {
-  		"W": [0, 1],
-  		"A": [1, 0],
-  		"S": [0, -1],
-  		"D": [-1, 0]
-  	}
-  	var offset = [0, 0];
-
-  	this.chars.forEach(function(ch) {
-  		offset[0] += dirs[ch][0];
-  		offset[1] += dirs[ch][1];
-  	});
-
-  	MM.App.map.moveBy(15*offset[0], 15*offset[1]);
-  }
-
-  MM.Command.Pan.handleEvent = function(e) {
-  	var ch = String.fromCharCode(e.keyCode);
-  	var index = this.chars.indexOf(ch);
-  	if (index > -1) {
-  		this.chars.splice(index, 1);
-  		if (!this.chars.length) {
-  			window.removeEventListener("keyup", this);
-  			clearInterval(this.interval);
-  		}
-  	}
-  }
+  // MM.Command.Pan.handleEvent = function(e) {
+  // 	var ch = String.fromCharCode(e.keyCode);
+  // 	var index = this.chars.indexOf(ch);
+  // 	if (index > -1) {
+  // 		this.chars.splice(index, 1);
+  // 		if (!this.chars.length) {
+  // 			window.removeEventListener("keyup", this);
+  // 			clearInterval(this.interval);
+  // 		}
+  // 	}
+  // }
 
   MM.Command.Copy = Object.create(MM.Command, {
   	label: {value: "Copy"},
@@ -5048,7 +5074,7 @@
   	this._port.removeEventListener("mousemove", this);
   	this._port.removeEventListener("mouseup", this);
 
-  	if (this._mode == "pan") { return; } /* no cleanup after panning */
+  	// if (this._mode == "pan") { return; } /* no cleanup after panning */
 
   	if (this._ghost) {
   		var state = this._computeDragState();
@@ -5273,7 +5299,7 @@
 
   			case "item-change":
   				if (publisher.isRoot() && publisher.getMap() == this.map) {
-  					document.title = this.map.getName() + " :: My Mind";
+  					document.title = "Hydrum || Your Complete Project Management Solution";
   				}
   			break;
   		}
