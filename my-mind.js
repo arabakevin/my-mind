@@ -953,8 +953,10 @@ MM.Item.prototype._findLinks = function(node) {
   }
 }
 MM.Map = function(options) {
+  var root_name =  window.location.pathname.replace('/edit', '')
+  root_name = root_name.replace('/ideas/', '')
   var o = {
-    root: "My Mind Map",
+    root: "root_name",
     layout: MM.Layout.Map
   }
   for (var p in options) { o[p] = options[p]; }
