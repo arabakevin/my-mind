@@ -956,7 +956,7 @@ MM.Map = function(options) {
   var root_name =  window.location.pathname.replace('/edit', '')
   root_name = root_name.replace('/ideas/', '')
   var o = {
-    root: "root_name",
+    root: root_name,
     layout: MM.Layout.Map
   }
   for (var p in options) { o[p] = options[p]; }
