@@ -955,6 +955,8 @@ MM.Item.prototype._findLinks = function(node) {
 MM.Map = function(options) {
   var root_name =  window.location.pathname.replace('/edit', '')
   root_name = root_name.replace('/ideas/', '')
+  const regex = /-/gi
+  root_name.replace(regex, ' ')
   var o = {
     root: root_name,
     layout: MM.Layout.Map
@@ -5339,9 +5341,9 @@ MM.App = {
     this._throbber.classList[visible ? "add" : "remove"]("visible");
   },
 
-  init: function() {
-    this._port = document.querySelector("#port");
-    this._throbber = document.querySelector("#throbber");
+  init: function(port="#port", throbber="#throbber") {
+    this._port = document.querySelector(port);
+    this._throbber = document.querySelector(throbber);
     this.ui = new MM.UI();
     this.io = new MM.UI.IO();
 //   		this.help = new MM.UI.Help();
