@@ -353,6 +353,7 @@ MM.Item = function() {
 
 MM.Item.COLOR = "#999";
 MM.Item.NODE = "";
+MM.Item.SAVEMINDMAP = "";
 
     /* RE explanation:
      *          _________________________________________________________________________ One of the three possible variants
@@ -1072,8 +1073,16 @@ MM.Map.prototype.onSelectNode = function(callback) {
   MM.Item.NODE = callback
 }
 
+MM.Map.prototype.saveAfterOperations = function(callback) {
+  MM.Item.SAVEMINDMAP = callback
+}
+
 MM.Map.prototype.changeSelectNode = function(id, name, callback) {
   if(callback) callback(id, name);
+}
+
+MM.Map.prototype.saveMindMap = function(callback) {
+  if(callback) callback();
 }
 
 MM.Map.prototype.moveBy = function(dx, dy) {
@@ -1346,6 +1355,7 @@ MM.Action.AppendItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.AppendItem.prototype.perform = function() {
   this._parent.insertChild(this._item);
   MM.App.select(this._item);
+  MM.App.map.saveMindMap(MM.Item.SAVEMINDMAP)
 }
 MM.Action.AppendItem.prototype.undo = function() {
   this._parent.removeChild(this._item);
@@ -1361,6 +1371,7 @@ MM.Action.RemoveItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.RemoveItem.prototype.perform = function() {
   this._parent.removeChild(this._item);
   MM.App.select(this._parent);
+  MM.App.map.saveMindMap(MM.Item.SAVEMINDMAP)
 }
 MM.Action.RemoveItem.prototype.undo = function() {
   this._parent.insertChild(this._item, this._index);
@@ -1385,6 +1396,7 @@ MM.Action.MoveItem.prototype.perform = function() {
     this._newParent.insertChild(this._item, this._newIndex);
   }
   MM.App.select(this._item);
+  MM.App.map.saveMindMap(MM.Item.SAVEMINDMAP)
 }
 MM.Action.MoveItem.prototype.undo = function() {
   this._item.setSide(this._oldSide);
@@ -1462,6 +1474,7 @@ MM.Action.SetText.prototype.perform = function() {
   this._item.setText(this._text);
   var numText = Number(this._text);
   if (numText == this._text) { this._item.setValue(numText); }
+  MM.App.map.saveMindMap(MM.Item.SAVEMINDMAP);
 }
 MM.Action.SetText.prototype.undo = function() {
   this._item.setText(this._oldText);
