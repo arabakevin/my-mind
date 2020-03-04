@@ -4953,7 +4953,9 @@ MM.Mouse = {
   _item: null,
   _ghost: null,
   _oldDragState: null,
-  _touchTimeout: null
+  _touchTimeout: null,
+  _data_dblclick: 0,
+  _processDragNode: false
 }
 
 MM.Mouse.init = function(port) {
@@ -4970,16 +4972,34 @@ MM.Mouse.init = function(port) {
 MM.Mouse.handleEvent = function(e) {
   switch (e.type) {
     case "click":
-      var item = MM.App.map.getItemFor(e.target);
-      if (MM.App.editing && item == MM.App.current) { return; } /* ignore on edited node */
-      if (item) { MM.App.select(item); }
-      MM.App.map.selectNode(item);
-
+      // When not dragging a node
+      if (this._processDragNode == false) {
+        // Wait 300ms for potential double click
+        setTimeout(function () {
+          // If it's a double click
+          if (this._data_dblclick == 1) {
+            // Doing nothing
+          // If it's a single click
+          } else {
+            // Triggers selectNode event
+            var item = MM.App.map.getItemFor(e.target);
+            if (MM.App.editing && item == MM.App.current) { return; } /* ignore on edited node */
+            if (item) {
+              MM.App.select(item);
+              MM.App.map.selectNode(item);
+            }
+          }
+        }, 300);
+      // When dragging a node
+      } else {
+        this._processDragNode = false;
+      }
     break;
 
     case "dblclick":
       var item = MM.App.map.getItemFor(e.target);
       if (item) { MM.Command.Edit.execute(); }
+      this._data_dblclick = 1
     break;
 
     case "contextmenu":
@@ -5021,6 +5041,7 @@ MM.Mouse.handleEvent = function(e) {
       e.clientY = e.touches[0].clientY;
       clearTimeout(this._touchTimeout);
     case "mousemove":
+      this._processDragNode = true
       this._processDrag(e);
     break;
 
