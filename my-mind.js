@@ -39,6 +39,14 @@ var MM = {
       var code = Math.floor(Math.random()*26);
       str += String.fromCharCode("a".charCodeAt(0) + code);
     }
+    for (var i=0;i<8;i++) {
+      var code = Math.floor(Math.random() * 10);
+      str += code;
+    }
+    for (var i=0;i<8;i++) {
+      var code = Math.floor(Math.random()*26);
+      str += String.fromCharCode("a".charCodeAt(0) + code);
+    }
     return str;
   }
 };
@@ -314,7 +322,7 @@ MM.Item = function() {
   this._status = null;
   this._side = null; /* side preference */
   this._icon = null;
-  this._id = MM.generateId();
+  this._id = this._id || MM.generateId();
   this._oldText = "";
 
   this._computed = {
