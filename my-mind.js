@@ -827,7 +827,7 @@ MM.Item.prototype._getAutoShape = function() {
   switch (depth) {
     case 0: return MM.Shape.Ellipse;
     case 1: return MM.Shape.Box;
-    default: return MM.Shape.Box;
+    default: return MM.Shape.Underline;
   }
 }
 
