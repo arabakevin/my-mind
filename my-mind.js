@@ -962,12 +962,8 @@ MM.Item.prototype._findLinks = function(node) {
   }
 }
 MM.Map = function(options) {
-  var root_name =  window.location.pathname.replace('/edit', '')
-  root_name = root_name.replace('/ideas/', '')
-  const regex = /-/gi
-  root_name.replace(regex, ' ')
   var o = {
-    root: root_name,
+    root: options,
     layout: MM.Layout.Map
   }
   for (var p in options) { o[p] = options[p]; }
@@ -5383,7 +5379,7 @@ MM.App = {
     this._throbber.classList[visible ? "add" : "remove"]("visible");
   },
 
-  init: function(port="#port", throbber="#throbber") {
+  init: function(rootNodeName="root", port="#port", throbber="#throbber") {
     this._port = document.querySelector(port);
     this._throbber = document.querySelector(throbber);
     this.ui = new MM.UI();
@@ -5402,7 +5398,7 @@ MM.App = {
     MM.subscribe("item-change", this);
 
     this._syncPort();
-    this.setMap(new MM.Map());
+    this.setMap(new MM.Map(rootNodeName));
   },
 
   _syncPort: function() {
