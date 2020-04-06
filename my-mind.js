@@ -5379,7 +5379,7 @@ MM.App = {
     this._throbber.classList[visible ? "add" : "remove"]("visible");
   },
   
-    setTextRoot: function(text) {
+  setTextRoot: function(text) {
     var item = MM.App.current;
     while (!item.isRoot()) { item = item.getParent(); }
     item.setText(text);
