@@ -5378,6 +5378,12 @@ MM.App = {
   setThrobber: function(visible) {
     this._throbber.classList[visible ? "add" : "remove"]("visible");
   },
+  
+    setTextRoot: function(text) {
+    var item = MM.App.current;
+    while (!item.isRoot()) { item = item.getParent(); }
+    item.setText(text);
+  },
 
   init: function(rootNodeName="root", port="#port", throbber="#throbber") {
     this._port = document.querySelector(port);
