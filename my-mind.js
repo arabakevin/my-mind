@@ -1806,61 +1806,61 @@ MM.Command.Delete.execute = function() {
   MM.App.action(action);
 }
 
-MM.Command.Swap = Object.create(MM.Command, {
-  label: {value: "Swap sibling"},
-  keys: {value: [
-    {keyCode: 38, ctrlKey:true},
-    {keyCode: 40, ctrlKey:true},
-  ]}
-});
-MM.Command.Swap.execute = function(e) {
-  var current = MM.App.current;
-  if (current.isRoot() || current.getParent().getChildren().length < 2) { return; }
+// MM.Command.Swap = Object.create(MM.Command, {
+//   label: {value: "Swap sibling"},
+//   keys: {value: [
+//     {keyCode: 38, ctrlKey:true},
+//     {keyCode: 40, ctrlKey:true},
+//   ]}
+// });
+// MM.Command.Swap.execute = function(e) {
+//   var current = MM.App.current;
+//   if (current.isRoot() || current.getParent().getChildren().length < 2) { return; }
 
-  var diff = (e.keyCode == 38 ? -1 : 1);
-  var action = new MM.Action.Swap(MM.App.current, diff);
-  MM.App.action(action);
-}
+//   var diff = (e.keyCode == 38 ? -1 : 1);
+//   var action = new MM.Action.Swap(MM.App.current, diff);
+//   MM.App.action(action);
+// }
 
-MM.Command.Side = Object.create(MM.Command, {
-  label: {value: "Change side"},
-  keys: {value: [
-    {keyCode: 37, ctrlKey:true},
-    {keyCode: 39, ctrlKey:true},
-  ]}
-});
-MM.Command.Side.execute = function(e) {
-  var current = MM.App.current;
-  if (current.isRoot() || !current.getParent().isRoot()) { return; }
+// MM.Command.Side = Object.create(MM.Command, {
+//   label: {value: "Change side"},
+//   keys: {value: [
+//     {keyCode: 37, ctrlKey:true},
+//     {keyCode: 39, ctrlKey:true},
+//   ]}
+// });
+// MM.Command.Side.execute = function(e) {
+//   var current = MM.App.current;
+//   if (current.isRoot() || !current.getParent().isRoot()) { return; }
 
-  var side = (e.keyCode == 37 ? "left" : "right");
-  var action = new MM.Action.SetSide(MM.App.current, side);
-  MM.App.action(action);
-}
+//   var side = (e.keyCode == 37 ? "left" : "right");
+//   var action = new MM.Action.SetSide(MM.App.current, side);
+//   MM.App.action(action);
+// }
 
-MM.Command.Save = Object.create(MM.Command, {
-  label: {value: "Save map"},
-  keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:false}]}
-});
-MM.Command.Save.execute = function() {
-  MM.App.io.quickSave();
-}
+// MM.Command.Save = Object.create(MM.Command, {
+//   label: {value: "Save map"},
+//   keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:false}]}
+// });
+// MM.Command.Save.execute = function() {
+//   MM.App.io.quickSave();
+// }
 
-MM.Command.SaveAs = Object.create(MM.Command, {
-  label: {value: "Save as&hellip;"},
-  keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:true}]}
-});
-MM.Command.SaveAs.execute = function() {
-  MM.App.io.show("save");
-}
+// MM.Command.SaveAs = Object.create(MM.Command, {
+//   label: {value: "Save as&hellip;"},
+//   keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:true}]}
+// });
+// MM.Command.SaveAs.execute = function() {
+//   MM.App.io.show("save");
+// }
 
-MM.Command.Load = Object.create(MM.Command, {
-  label: {value: "Load map"},
-  keys: {value: [{keyCode: "O".charCodeAt(0), ctrlKey:true}]}
-});
-MM.Command.Load.execute = function() {
-  MM.App.io.show("load");
-}
+// MM.Command.Load = Object.create(MM.Command, {
+//   label: {value: "Load map"},
+//   keys: {value: [{keyCode: "O".charCodeAt(0), ctrlKey:true}]}
+// });
+// MM.Command.Load.execute = function() {
+//   MM.App.io.show("load");
+// }
 
 MM.Command.Center = Object.create(MM.Command, {
   label: {value: "Center map"},
@@ -1870,16 +1870,16 @@ MM.Command.Center.execute = function() {
   MM.App.map.center();
 }
 
-MM.Command.New = Object.create(MM.Command, {
-  label: {value: "New map"},
-  keys: {value: [{keyCode: "N".charCodeAt(0), ctrlKey:true}]}
-});
-MM.Command.New.execute = function() {
-  if (!confirm("Throw away your current map and start a new one?")) { return; }
-  var map = new MM.Map();
-  MM.App.setMap(map);
-  MM.publish("map-new", this);
-}
+// MM.Command.New = Object.create(MM.Command, {
+//   label: {value: "New map"},
+//   keys: {value: [{keyCode: "N".charCodeAt(0), ctrlKey:true}]}
+// });
+// MM.Command.New.execute = function() {
+//   if (!confirm("Throw away your current map and start a new one?")) { return; }
+//   var map = new MM.Map();
+//   MM.App.setMap(map);
+//   MM.publish("map-new", this);
+// }
 
 MM.Command.ZoomIn = Object.create(MM.Command, {
   label: {value: "Zoom in"},
@@ -1905,13 +1905,13 @@ MM.Command.ZoomOut.execute = function() {
 //   	MM.App.help.toggle();
 //   }
 
-MM.Command.UI = Object.create(MM.Command, {
-  label: {value: "Show/hide UI"},
-  keys: {value: [{charCode: "*".charCodeAt(0)}]}
-});
-MM.Command.UI.execute = function() {
-  MM.App.ui.toggle();
-}
+// MM.Command.UI = Object.create(MM.Command, {
+//   label: {value: "Show/hide UI"},
+//   keys: {value: [{charCode: "*".charCodeAt(0)}]}
+// });
+// MM.Command.UI.execute = function() {
+//   MM.App.ui.toggle();
+// }
 
 // MM.Command.Pan = Object.create(MM.Command, {
 // 	label: {value: "Pan the map"},
@@ -1966,45 +1966,45 @@ MM.Command.UI.execute = function() {
 // 	}
 // }
 
-MM.Command.Copy = Object.create(MM.Command, {
-  label: {value: "Copy"},
-  prevent: {value: false},
-  keys: {value: [
-    {keyCode: "C".charCodeAt(0), ctrlKey:true},
-    {keyCode: "C".charCodeAt(0), metaKey:true}
-  ]}
-});
-MM.Command.Copy.execute = function() {
-  MM.Clipboard.copy(MM.App.current);
-}
+// MM.Command.Copy = Object.create(MM.Command, {
+//   label: {value: "Copy"},
+//   prevent: {value: false},
+//   keys: {value: [
+//     {keyCode: "C".charCodeAt(0), ctrlKey:true},
+//     {keyCode: "C".charCodeAt(0), metaKey:true}
+//   ]}
+// });
+// MM.Command.Copy.execute = function() {
+//   MM.Clipboard.copy(MM.App.current);
+// }
 
-MM.Command.Cut = Object.create(MM.Command, {
-  label: {value: "Cut"},
-  prevent: {value: false},
-  keys: {value: [
-    {keyCode: "X".charCodeAt(0), ctrlKey:true},
-    {keyCode: "X".charCodeAt(0), metaKey:true}
-  ]}
-});
-MM.Command.Cut.execute = function() {
-  MM.Clipboard.cut(MM.App.current);
-}
+// MM.Command.Cut = Object.create(MM.Command, {
+//   label: {value: "Cut"},
+//   prevent: {value: false},
+//   keys: {value: [
+//     {keyCode: "X".charCodeAt(0), ctrlKey:true},
+//     {keyCode: "X".charCodeAt(0), metaKey:true}
+//   ]}
+// });
+// MM.Command.Cut.execute = function() {
+//   MM.Clipboard.cut(MM.App.current);
+// }
 
-MM.Command.Paste = Object.create(MM.Command, {
-  label: {value: "Paste"},
-  prevent: {value: false},
-  keys: {value: [
-    {keyCode: "V".charCodeAt(0), ctrlKey:true},
-    {keyCode: "V".charCodeAt(0), metaKey:true}
-  ]}
-});
-MM.Command.Paste.execute = function() {
-  MM.Clipboard.paste(MM.App.current);
-}
+// MM.Command.Paste = Object.create(MM.Command, {
+//   label: {value: "Paste"},
+//   prevent: {value: false},
+//   keys: {value: [
+//     {keyCode: "V".charCodeAt(0), ctrlKey:true},
+//     {keyCode: "V".charCodeAt(0), metaKey:true}
+//   ]}
+// });
+// MM.Command.Paste.execute = function() {
+//   MM.Clipboard.paste(MM.App.current);
+// }
 
 MM.Command.Fold = Object.create(MM.Command, {
   label: {value: "Fold/Unfold"},
-  keys: {value: [{charCode: "f".charCodeAt(0), ctrlKey:false}]}
+  keys:  {value: [{keyCode: 112}]}
 });
 MM.Command.Fold.execute = function() {
   var item = MM.App.current;
@@ -2014,7 +2014,6 @@ MM.Command.Fold.execute = function() {
 MM.Command.Edit = Object.create(MM.Command, {
   label: {value: "Edit item"},
   keys: {value: [
-    {keyCode: 32},
     {keyCode: 113}
   ]}
 });
@@ -2088,34 +2087,35 @@ MM.Command.Style.execute = function() {
   }
 }
 
-MM.Command.Bold = Object.create(MM.Command.Style, {
-  command: {value: "bold"},
-  label: {value: "Bold"},
-  keys: {value: [{keyCode: "B".charCodeAt(0), ctrlKey:true}]}
-});
+// MM.Command.Bold = Object.create(MM.Command.Style, {
+//   command: {value: "bold"},
+//   label: {value: "Bold"},
+//   keys: {value: [{keyCode: "B".charCodeAt(0), ctrlKey:true}]}
+// });
 
-MM.Command.Underline = Object.create(MM.Command.Style, {
-  command: {value: "underline"},
-  label: {value: "Underline"},
-  keys: {value: [{keyCode: "U".charCodeAt(0), ctrlKey:true}]}
-});
+// MM.Command.Underline = Object.create(MM.Command.Style, {
+//   command: {value: "underline"},
+//   label: {value: "Underline"},
+//   keys: {value: [{keyCode: "U".charCodeAt(0), ctrlKey:true}]}
+// });
 
-MM.Command.Italic = Object.create(MM.Command.Style, {
-  command: {value: "italic"},
-  label: {value: "Italic"},
-  keys: {value: [{keyCode: "I".charCodeAt(0), ctrlKey:true}]}
-});
+// MM.Command.Italic = Object.create(MM.Command.Style, {
+//   command: {value: "italic"},
+//   label: {value: "Italic"},
+//   keys: {value: [{keyCode: "I".charCodeAt(0), ctrlKey:true}]}
+// });
 
-MM.Command.Strikethrough = Object.create(MM.Command.Style, {
-  command: {value: "strikeThrough"},
-  label: {value: "Strike-through"},
-  keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true}]}
-});
+// MM.Command.Strikethrough = Object.create(MM.Command.Style, {
+//   command: {value: "strikeThrough"},
+//   label: {value: "Strike-through"},
+//   keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true}]}
+// });
 
 MM.Command.Value = Object.create(MM.Command, {
   label: {value: "Set status"},
-  // keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false, metaKey:false}]}
-    keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false, metaKey:false}]}
+  keys: {value: [
+    {keyCode: 113, ctrlKey:true}
+  ]}
 });
 
 MM.Command.Value.execute = function() {
@@ -2133,38 +2133,38 @@ MM.Command.Value.execute = function() {
   MM.App.action(action);
 }
 
-MM.Command.Yes = Object.create(MM.Command, {
-  label: {value: "Yes"},
-  keys: {value: [{charCode: "y".charCodeAt(0), ctrlKey:false}]}
-});
-MM.Command.Yes.execute = function() {
-  var item = MM.App.current;
-  var status = (item.getStatus() == "yes" ? null : "yes");
-  var action = new MM.Action.SetStatus(item, status);
-  MM.App.action(action);
-}
+// MM.Command.Yes = Object.create(MM.Command, {
+//   label: {value: "Yes"},
+//   keys: {value: [{charCode: "y".charCodeAt(0), ctrlKey:false}]}
+// });
+// MM.Command.Yes.execute = function() {
+//   var item = MM.App.current;
+//   var status = (item.getStatus() == "yes" ? null : "yes");
+//   var action = new MM.Action.SetStatus(item, status);
+//   MM.App.action(action);
+// }
 
-MM.Command.No = Object.create(MM.Command, {
-  label: {value: "No"},
-  keys: {value: [{charCode: "n".charCodeAt(0), ctrlKey:false}]}
-});
-MM.Command.No.execute = function() {
-  var item = MM.App.current;
-  var status = (item.getStatus() == "no" ? null : "no");
-  var action = new MM.Action.SetStatus(item, status);
-  MM.App.action(action);
-}
+// MM.Command.No = Object.create(MM.Command, {
+//   label: {value: "No"},
+//   keys: {value: [{charCode: "n".charCodeAt(0), ctrlKey:false}]}
+// });
+// MM.Command.No.execute = function() {
+//   var item = MM.App.current;
+//   var status = (item.getStatus() == "no" ? null : "no");
+//   var action = new MM.Action.SetStatus(item, status);
+//   MM.App.action(action);
+// }
 
-MM.Command.Computed = Object.create(MM.Command, {
-  label: {value: "Computed"},
-  keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false, metaKey:false}]}
-});
-MM.Command.Computed.execute = function() {
-  var item = MM.App.current;
-  var status = (item.getStatus() == "computed" ? null : "computed");
-  var action = new MM.Action.SetStatus(item, status);
-  MM.App.action(action);
-}
+// MM.Command.Computed = Object.create(MM.Command, {
+//   label: {value: "Computed"},
+//   keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false, metaKey:false}]}
+// });
+// MM.Command.Computed.execute = function() {
+//   var item = MM.App.current;
+//   var status = (item.getStatus() == "computed" ? null : "computed");
+//   var action = new MM.Action.SetStatus(item, status);
+//   MM.App.action(action);
+// }
 MM.Command.Select = Object.create(MM.Command, {
   label: {value: "Move selection"},
   keys: {value: [
@@ -2200,7 +2200,7 @@ MM.Command.SelectRoot.execute = function() {
 
 MM.Command.SelectParent = Object.create(MM.Command, {
   label: {value: "Select parent"},
-  keys: {value: [{keyCode: 8}]}
+  keys: {value: [{keyCode: 114}]}
 });
 MM.Command.SelectParent.execute = function() {
   if (MM.App.current.isRoot()) { return; }
