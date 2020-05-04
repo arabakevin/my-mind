@@ -362,6 +362,7 @@ MM.Item = function() {
 MM.Item.COLOR = "#999";
 MM.Item.NODE = "";
 MM.Item.SAVEMINDMAP = "";
+MM.disableKeyboardShortcuts = false;
 
     /* RE explanation:
      *          _________________________________________________________________________ One of the three possible variants
@@ -1251,9 +1252,16 @@ MM.Map.prototype._setRoot = function(item) {
   this._root.setParent(this);
 }
 MM.Keyboard = {};
-MM.Keyboard.init = function() {
-  window.addEventListener("keydown", this);
-  window.addEventListener("keypress", this);
+MM.Keyboard.init = function(toggle = false) {
+  if (toggle == false){
+    window.addEventListener("keydown", this);
+    window.addEventListener("keypress", this);
+  } else {
+    window.removeEventListener("keydown", this);
+    window.removeEventListener("keypress", this);
+    MM.disableKeyboardShortcuts = true
+    console.log("hello")
+  }
 }
 
 MM.Keyboard.handleEvent = function(e) {
@@ -1264,28 +1272,32 @@ MM.Keyboard.handleEvent = function(e) {
     node = node.parentNode;
   }
 
+  if (MM.disableKeyboardShortcuts == false){
   var commands = MM.Command.getAll();
-  for (var i=0;i<commands.length;i++) {
-    var command = commands[i];
-    if (!command.isValid()) { continue; }
-    var keys = command.keys;
-    for (var j=0;j<keys.length;j++) {
-      if (this._keyOK(keys[j], e)) {
-        command.prevent && e.preventDefault();
-        command.execute(e);
-        return;
+    for (var i=0;i<commands.length;i++) {
+      var command = commands[i];
+      if (!command.isValid()) { continue; }
+      var keys = command.keys;
+      for (var j=0;j<keys.length;j++) {
+        if (this._keyOK(keys[j], e)) {
+          command.prevent && e.preventDefault();
+          command.execute(e);
+          return;
+        }
       }
     }
   }
 }
 
 MM.Keyboard._keyOK = function(key, e) {
-  if ("keyCode" in key && e.type != "keydown") { return false; }
-  if ("charCode" in key && e.type != "keypress") { return false; }
-  for (var p in key) {
-    if (key[p] != e[p]) { return false; }
+  if (MM.disableKeyboardShortcuts == false) {
+    if ("keyCode" in key && e.type != "keydown") { return false; }
+    if ("charCode" in key && e.type != "keypress") { return false; }
+    for (var p in key) {
+      if (key[p] != e[p]) { return false; }
+    }
+    return true;
   }
-  return true;
 }
 MM.Tip = {
   _node: null,
@@ -5379,6 +5391,14 @@ MM.App = {
     this._throbber.classList[visible ? "add" : "remove"]("visible");
   },
   
+  desactivateMindMapKeyBoard: function() {
+    MM.Keyboard.init(true);
+  },
+
+  activateMindMapKeyBoard: function() {
+    MM.Keyboard.init();
+  },
+
   setRootNodeText: function(text) {
     var item = MM.App.current;
     while (!item.isRoot()) { item = item.getParent(); }
