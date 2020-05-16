@@ -1256,6 +1256,7 @@ MM.Keyboard.init = function(toggle = false) {
   if (toggle == false){
     window.addEventListener("keydown", this);
     window.addEventListener("keypress", this);
+    MM.disableKeyboardShortcuts = false
   } else {
     window.removeEventListener("keydown", this);
     window.removeEventListener("keypress", this);
