@@ -5426,6 +5426,12 @@ MM.App = {
     this.setMap(new MM.Map(rootNodeName));
   },
 
+  selectRootNode: function() {
+    var item = MM.App.current;
+    while (!item.isRoot()) { item = item.getParent(); }
+    MM.App.select(item);
+  },
+
   _syncPort: function() {
     this.portSize = [window.innerWidth - this.ui.getWidth(), window.innerHeight];
     this._port.style.width = this.portSize[0] + "px";
