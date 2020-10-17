@@ -39,6 +39,14 @@ var MM = {
       var code = Math.floor(Math.random()*26);
       str += String.fromCharCode("a".charCodeAt(0) + code);
     }
+    for (var i=0;i<8;i++) {
+      var code = Math.floor(Math.random() * 10);
+      str += code;
+    }
+    for (var i=0;i<8;i++) {
+      var code = Math.floor(Math.random()*26);
+      str += String.fromCharCode("a".charCodeAt(0) + code);
+    }
     return str;
   }
 };
@@ -47,7 +55,7 @@ exports.MM = MM;
 
 /*
   Any copyright is dedicated to the Public Domain.
-  http://creativecommons.org/publicdomain/zero/1.0/
+  http://creativecoMMons.org/publicdomain/zero/1.0/
 */
 
 /**
@@ -273,7 +281,7 @@ Promise.worker = function(url, message) {
   return promise;
 }
 /**
- * Prototype for all things categorizable: shapes, layouts, commands, formats, backends...
+ * Prototype for all things categorizable: shapes, layouts, coMMands, formats, backends...
  */
 MM.Repo = {
   id: "", /* internal ID */
@@ -314,7 +322,7 @@ MM.Item = function() {
   this._status = null;
   this._side = null; /* side preference */
   this._icon = null;
-  this._id = MM.generateId();
+  this._id = this._id || MM.generateId();
   this._oldText = "";
 
   this._computed = {
@@ -353,6 +361,8 @@ MM.Item = function() {
 
 MM.Item.COLOR = "#999";
 MM.Item.NODE = "";
+MM.Item.SAVEMINDMAP = "";
+MM.disableKeyboardShortcuts = false;
 
     /* RE explanation:
      *          _________________________________________________________________________ One of the three possible variants
@@ -497,18 +507,25 @@ MM.Item.prototype.clone = function() {
   return this.constructor.fromJSON(data);
 }
 
+// MM.Item.prototype.selectNode = function() {
+// 	// this._dom.node.classList.add("current");
+// 	// this.getMap().ensureItemVisibility(this);
+// 	// MM.Clipboard.focus(); /* going to mode 2c */
+// 	// MM.publish("item-select", this);
+//   var callback = MM.Item.NODE
+//   MM.App.map.changeSelectNode(this._id, this._dom.text.innerHTML, callback)
+// }
+
 MM.Item.prototype.select = function() {
   this._dom.node.classList.add("current");
   this.getMap().ensureItemVisibility(this);
-  // MM.Clipboard.focus(); /* going to mode 2c */
+  MM.Clipboard.focus(); /* going to mode 2c */
   MM.publish("item-select", this);
-  // var callback = MM.Item.NODE
-  // MM.App.map.SelectNode(this._id, this._dom.text.innerHTML, callback)
 }
 
 MM.Item.prototype.deselect = function() {
   /* we were in 2b; finish that via 3b */
-  if (MM.App.editing) { MM.Command.Finish.execute(); }
+  if (MM.App.editing) { MM.CoMMand.Finish.execute(); }
   this._dom.node.classList.remove("current");
 }
 
@@ -774,7 +791,7 @@ MM.Item.prototype.stopEditing = function() {
 
   this.update(); /* text changed */
 
-  // MM.Clipboard.focus();
+  MM.Clipboard.focus();
 
   return result;
 }
@@ -791,12 +808,12 @@ MM.Item.prototype.handleEvent = function(e) {
     break;
 
     case "blur": /* 3d */
-      MM.Command.Finish.execute();
+      MM.CoMMand.Finish.execute();
     break;
 
     case "click":
       if (this._collapsed) { this.expand(); } else { this.collapse(); }
-      MM.App.select(this);
+      MM.App.select(this, "node");
     break;
   }
 }
@@ -947,7 +964,7 @@ MM.Item.prototype._findLinks = function(node) {
 }
 MM.Map = function(options) {
   var o = {
-    root: "My Mind Map",
+    root: options,
     layout: MM.Layout.Map
   }
   for (var p in options) { o[p] = options[p]; }
@@ -1057,13 +1074,21 @@ MM.Map.prototype.center = function() {
   return this;
 }
 
-// MM.Map.prototype.onSelectNode = function(callback) {
-//   MM.Item.NODE = callback
-// }
+MM.Map.prototype.onSelectNode = function(callback) {
+  MM.Item.NODE = callback
+}
 
-// MM.Map.prototype.SelectNode = function(name, id, callback) {
-//   if(callback) callback(name, id);
-// }
+MM.Map.prototype.saveAfterOperations = function(callback) {
+  MM.Item.SAVEMINDMAP = callback
+}
+
+MM.Map.prototype.changeSelectNode = function(id, name, callback) {
+  if(callback) callback(id, name);
+}
+
+MM.Map.prototype.saveMindMap = function(callback) {
+  if(callback) callback();
+}
 
 MM.Map.prototype.moveBy = function(dx, dy) {
   return this._moveTo(this._position[0]+dx, this._position[1]+dy);
@@ -1113,6 +1138,12 @@ MM.Map.prototype.getItemFor = function(node) {
   }
 
   return scan(this._root, node);
+}
+
+MM.Map.prototype.selectNode = function(item) {
+
+  var callback = MM.Item.NODE
+  MM.App.map.changeSelectNode(item._id, item._dom.text.innerHTML, callback)
 }
 
 MM.Map.prototype.ensureItemVisibility = function(item) {
@@ -1221,9 +1252,16 @@ MM.Map.prototype._setRoot = function(item) {
   this._root.setParent(this);
 }
 MM.Keyboard = {};
-MM.Keyboard.init = function() {
-  window.addEventListener("keydown", this);
-  window.addEventListener("keypress", this);
+MM.Keyboard.init = function(toggle = false) {
+  if (toggle == false){
+    window.addEventListener("keydown", this);
+    window.addEventListener("keypress", this);
+    MM.disableKeyboardShortcuts = false
+  } else {
+    window.removeEventListener("keydown", this);
+    window.removeEventListener("keypress", this);
+    MM.disableKeyboardShortcuts = true
+  }
 }
 
 MM.Keyboard.handleEvent = function(e) {
@@ -1234,28 +1272,32 @@ MM.Keyboard.handleEvent = function(e) {
     node = node.parentNode;
   }
 
-  var commands = MM.Command.getAll();
-  for (var i=0;i<commands.length;i++) {
-    var command = commands[i];
-    if (!command.isValid()) { continue; }
-    var keys = command.keys;
-    for (var j=0;j<keys.length;j++) {
-      if (this._keyOK(keys[j], e)) {
-        command.prevent && e.preventDefault();
-        command.execute(e);
-        return;
+  if (MM.disableKeyboardShortcuts == false){
+  var coMMands = MM.CoMMand.getAll();
+    for (var i=0;i<coMMands.length;i++) {
+      var coMMand = coMMands[i];
+      if (!coMMand.isValid()) { continue; }
+      var keys = coMMand.keys;
+      for (var j=0;j<keys.length;j++) {
+        if (this._keyOK(keys[j], e)) {
+          coMMand.prevent && e.preventDefault();
+          coMMand.execute(e);
+          return;
+        }
       }
     }
   }
 }
 
 MM.Keyboard._keyOK = function(key, e) {
-  if ("keyCode" in key && e.type != "keydown") { return false; }
-  if ("charCode" in key && e.type != "keypress") { return false; }
-  for (var p in key) {
-    if (key[p] != e[p]) { return false; }
+  if (MM.disableKeyboardShortcuts == false) {
+    if ("keyCode" in key && e.type != "keydown") { return false; }
+    if ("charCode" in key && e.type != "keypress") { return false; }
+    for (var p in key) {
+      if (key[p] != e[p]) { return false; }
+    }
+    return true;
   }
-  return true;
 }
 MM.Tip = {
   _node: null,
@@ -1269,16 +1311,16 @@ MM.Tip = {
   },
 
   init: function() {
-    this._node = document.querySelector("#tip_node");
+    this._node = document.querySelector("#tip");
     this._node.addEventListener("click", this);
 
-    MM.subscribe("command-child", this);
-    MM.subscribe("command-sibling", this);
+    MM.subscribe("coMMand-child", this);
+    MM.subscribe("coMMand-sibling", this);
   },
 
   _hide: function() {
-    MM.unsubscribe("command-child", this);
-    MM.unsubscribe("command-sibling", this);
+    MM.unsubscribe("coMMand-child", this);
+    MM.unsubscribe("coMMand-sibling", this);
 
     this._node.removeEventListener("click", this);
     this._node.classList.add("hidden");
@@ -1329,6 +1371,7 @@ MM.Action.AppendItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.AppendItem.prototype.perform = function() {
   this._parent.insertChild(this._item);
   MM.App.select(this._item);
+  MM.App.map.saveMindMap(MM.Item.SAVEMINDMAP)
 }
 MM.Action.AppendItem.prototype.undo = function() {
   this._parent.removeChild(this._item);
@@ -1344,6 +1387,7 @@ MM.Action.RemoveItem.prototype = Object.create(MM.Action.prototype);
 MM.Action.RemoveItem.prototype.perform = function() {
   this._parent.removeChild(this._item);
   MM.App.select(this._parent);
+  MM.App.map.saveMindMap(MM.Item.SAVEMINDMAP)
 }
 MM.Action.RemoveItem.prototype.undo = function() {
   this._parent.insertChild(this._item, this._index);
@@ -1368,6 +1412,7 @@ MM.Action.MoveItem.prototype.perform = function() {
     this._newParent.insertChild(this._item, this._newIndex);
   }
   MM.App.select(this._item);
+  MM.App.map.saveMindMap(MM.Item.SAVEMINDMAP)
 }
 MM.Action.MoveItem.prototype.undo = function() {
   this._item.setSide(this._oldSide);
@@ -1445,6 +1490,7 @@ MM.Action.SetText.prototype.perform = function() {
   this._item.setText(this._text);
   var numText = Number(this._text);
   if (numText == this._text) { this._item.setValue(numText); }
+  MM.App.map.saveMindMap(MM.Item.SAVEMINDMAP);
 }
 MM.Action.SetText.prototype.undo = function() {
   this._item.setText(this._oldText);
@@ -1504,382 +1550,382 @@ MM.Action.SetSide.prototype.undo = function() {
   this._item.setSide(this._oldSide);
   this._item.getMap().update();
 }
-// MM.Clipboard = {
-// 	_item: null,
-// 	_mode: "",
-// 	_delay: 50,
-// 	_node: document.createElement("textarea")
-// };
-//
-// MM.Clipboard.init = function() {
-// 	this._node.style.position = "absolute";
-// 	this._node.style.width = 0;
-// 	this._node.style.height = 0;
-// 	this._node.style.left = "-100px";
-// 	this._node.style.top = "-100px";
-// 	document.body.appendChild(this._node);
-// }
-//
-// MM.Clipboard.focus = function() {
-// 	this._node.focus();
-// 	this._empty();
-// }
-//
-// MM.Clipboard.copy = function(sourceItem) {
-// 	this._endCut();
-// 	this._item = sourceItem.clone();
-// 	this._mode = "copy";
-//
-// 	this._expose();
-// }
-//
-// MM.Clipboard.paste = function(targetItem) {
-// 	setTimeout(function() {
-// 		var pasted = this._node.value;
-// 		this._empty();
-// 		if (!pasted) { return; } /* nothing */
-//
-// 		if (this._item && pasted == MM.Format.Plaintext.to(this._item.toJSON())) { /* pasted a previously copied/cut item */
-// 			this._pasteItem(this._item, targetItem);
-// 		} else { /* pasted some external data */
-// 			this._pastePlaintext(pasted, targetItem);
-// 		}
-//
-// 	}.bind(this), this._delay);
-// }
-//
-// MM.Clipboard._pasteItem = function(sourceItem, targetItem) {
-// 	switch (this._mode) {
-// 		case "cut":
-// 			if (sourceItem == targetItem || sourceItem.getParent() == targetItem) { /* abort by pasting on the same node or the parent */
-// 				this._endCut();
-// 				return;
-// 			}
-//
-// 			var item = targetItem;
-// 			while (!item.isRoot()) {
-// 				if (item == sourceItem) { return; } /* moving to a child => forbidden */
-// 				item = item.getParent();
-// 			}
-//
-// 			var action = new MM.Action.MoveItem(sourceItem, targetItem);
-// 			MM.App.action(action);
-//
-// 			this._endCut();
-// 		break;
-//
-// 		case "copy":
-// 			var action = new MM.Action.AppendItem(targetItem, sourceItem.clone());
-// 			MM.App.action(action);
-// 		break;
-// 	}
-// }
-//
-// MM.Clipboard._pastePlaintext = function(plaintext, targetItem) {
-// 	if (this._mode == "cut") { this._endCut(); } /* external paste => abort cutting */
-//
-// 	var json = MM.Format.Plaintext.from(plaintext);
-// 	var map = MM.Map.fromJSON(json);
-// 	var root = map.getRoot();
-//
-// 	if (root.getText()) {
-// 		var action = new MM.Action.AppendItem(targetItem, root);
-// 		MM.App.action(action);
-// 	} else {
-// 		var actions = root.getChildren().map(function(item) {
-// 			return new MM.Action.AppendItem(targetItem, item);
-// 		});
-// 		var action = new MM.Action.Multi(actions);
-// 		MM.App.action(action);
-// 	}
-// }
-//
-// MM.Clipboard.cut = function(sourceItem) {
-// 	this._endCut();
-//
-// 	this._item = sourceItem;
-// 	this._item.getDOM().node.classList.add("cut");
-// 	this._mode = "cut";
-//
-// 	this._expose();
-// }
-//
-// /**
-//  * Expose plaintext data to the textarea to be copied to system clipboard. Clear afterwards.
-//  */
-// MM.Clipboard._expose = function() {
-// 	var json = this._item.toJSON();
-// 	var plaintext = MM.Format.Plaintext.to(json);
-// 	this._node.value = plaintext;
-// 	this._node.selectionStart = 0;
-// 	this._node.selectionEnd = this._node.value.length;
-// 	setTimeout(this._empty.bind(this), this._delay);
-// }
-//
-// MM.Clipboard._empty = function() {
-// 	/* safari needs a non-empty selection in order to actually perfrom a real copy on cmd+c */
-// 	this._node.value = "\n";
-// 	this._node.selectionStart = 0;
-// 	this._node.selectionEnd = this._node.value.length;
-// }
-//
-// MM.Clipboard._endCut = function() {
-// 	if (this._mode != "cut") { return; }
-//
-// 	this._item.getDOM().node.classList.remove("cut");
-// 	this._item = null;
-// 	this._mode = "";
-// }
-// MM.Menu = {
-// 	_dom: {},
-// 	_port: null,
-//
-// 	open: function(x, y) {
-// 		this._dom.node.style.display = "";
-// 		var w = this._dom.node.offsetWidth;
-// 		var h = this._dom.node.offsetHeight;
-//
-// 		var left = x;
-// 		var top = y;
-//
-// 		if (left > this._port.offsetWidth / 2) { left -= w; }
-// 		if (top > this._port.offsetHeight / 2) { top -= h; }
-//
-// 		this._dom.node.style.left = left+"px";
-// 		this._dom.node.style.top = top+"px";
-// 	},
-//
-// 	close: function() {
-// 		this._dom.node.style.display = "none";
-// 	},
-//
-// 	handleEvent: function(e) {
-// 		if (e.currentTarget != this._dom.node) {
-// 			this.close();
-// 			return;
-// 		}
-//
-// 		e.stopPropagation(); /* no dragdrop, no blur of activeElement */
-// 		e.preventDefault(); /* we do not want to focus the button */
-//
-// 		var command = e.target.getAttribute("data-command");
-// 		if (!command) { return; }
-//
-// 		command = MM.Command[command];
-// 		if (!command.isValid()) { return; }
-//
-// 		command.execute();
-// 		this.close();
-// 	},
-//
-// 	init: function(port) {
-// 		this._port = port;
-// 		this._dom.node = document.querySelector("#menu");
-// 		var buttons = this._dom.node.querySelectorAll("[data-command]");
-// 		[].slice.call(buttons).forEach(function(button) {
-// 			button.innerHTML = MM.Command[button.getAttribute("data-command")].label;
-// 		});
-//
-// 		this._port.addEventListener("mousedown", this);
-// 		this._dom.node.addEventListener("mousedown", this);
-//
-// 		this.close();
-// 	}
+MM.Clipboard = {
+  _item: null,
+  _mode: "",
+  _delay: 50,
+  _node: document.createElement("textarea")
+};
+
+MM.Clipboard.init = function() {
+  this._node.style.position = "absolute";
+  this._node.style.width = 0;
+  this._node.style.height = 0;
+  this._node.style.left = "-100px";
+  this._node.style.top = "-100px";
+  document.body.appendChild(this._node);
+}
+
+MM.Clipboard.focus = function() {
+  this._node.focus();
+  this._empty();
+}
+
+MM.Clipboard.copy = function(sourceItem) {
+  this._endCut();
+  this._item = sourceItem.clone();
+  this._mode = "copy";
+
+  this._expose();
+}
+
+MM.Clipboard.paste = function(targetItem) {
+  setTimeout(function() {
+    var pasted = this._node.value;
+    this._empty();
+    if (!pasted) { return; } /* nothing */
+
+    if (this._item && pasted == MM.Format.Plaintext.to(this._item.toJSON())) { /* pasted a previously copied/cut item */
+      this._pasteItem(this._item, targetItem);
+    } else { /* pasted some external data */
+      this._pastePlaintext(pasted, targetItem);
+    }
+
+  }.bind(this), this._delay);
+}
+
+MM.Clipboard._pasteItem = function(sourceItem, targetItem) {
+  switch (this._mode) {
+    case "cut":
+      if (sourceItem == targetItem || sourceItem.getParent() == targetItem) { /* abort by pasting on the same node or the parent */
+        this._endCut();
+        return;
+      }
+
+      var item = targetItem;
+      while (!item.isRoot()) {
+        if (item == sourceItem) { return; } /* moving to a child => forbidden */
+        item = item.getParent();
+      }
+
+      var action = new MM.Action.MoveItem(sourceItem, targetItem);
+      MM.App.action(action);
+
+      this._endCut();
+    break;
+
+    case "copy":
+      var action = new MM.Action.AppendItem(targetItem, sourceItem.clone());
+      MM.App.action(action);
+    break;
+  }
+}
+
+MM.Clipboard._pastePlaintext = function(plaintext, targetItem) {
+  if (this._mode == "cut") { this._endCut(); } /* external paste => abort cutting */
+
+  var json = MM.Format.Plaintext.from(plaintext);
+  var map = MM.Map.fromJSON(json);
+  var root = map.getRoot();
+
+  if (root.getText()) {
+    var action = new MM.Action.AppendItem(targetItem, root);
+    MM.App.action(action);
+  } else {
+    var actions = root.getChildren().map(function(item) {
+      return new MM.Action.AppendItem(targetItem, item);
+    });
+    var action = new MM.Action.Multi(actions);
+    MM.App.action(action);
+  }
+}
+
+MM.Clipboard.cut = function(sourceItem) {
+  this._endCut();
+
+  this._item = sourceItem;
+  this._item.getDOM().node.classList.add("cut");
+  this._mode = "cut";
+
+  this._expose();
+}
+
+/**
+ * Expose plaintext data to the textarea to be copied to system clipboard. Clear afterwards.
+ */
+MM.Clipboard._expose = function() {
+  var json = this._item.toJSON();
+  var plaintext = MM.Format.Plaintext.to(json);
+  this._node.value = plaintext;
+  this._node.selectionStart = 0;
+  this._node.selectionEnd = this._node.value.length;
+  setTimeout(this._empty.bind(this), this._delay);
+}
+
+MM.Clipboard._empty = function() {
+  /* safari needs a non-empty selection in order to actually perfrom a real copy on cmd+c */
+  this._node.value = "\n";
+  this._node.selectionStart = 0;
+  this._node.selectionEnd = this._node.value.length;
+}
+
+MM.Clipboard._endCut = function() {
+  if (this._mode != "cut") { return; }
+
+  this._item.getDOM().node.classList.remove("cut");
+  this._item = null;
+  this._mode = "";
+}
+MM.Menu = {
+  _dom: {},
+  _port: null,
+
+  open: function(x, y) {
+    this._dom.node.style.display = "";
+    var w = this._dom.node.offsetWidth;
+    var h = this._dom.node.offsetHeight;
+
+    var left = x;
+    var top = y;
+
+    if (left > this._mindmapNodePort.offsetWidth / 2) { left -= w; }
+    if (top > this._mindmapNodePort.offsetHeight / 2) { top -= h; }
+
+    this._dom.node.style.left = left+"px";
+    this._dom.node.style.top = top+"px";
+  },
+
+  close: function() {
+    this._dom.node.style.display = "none";
+  },
+
+  handleEvent: function(e) {
+    if (e.currentTarget != this._dom.node) {
+      this.close();
+      return;
+    }
+
+    e.stopPropagation(); /* no dragdrop, no blur of activeElement */
+    e.preventDefault(); /* we do not want to focus the button */
+
+    var coMMand = e.target.getAttribute("data-coMMand");
+    if (!coMMand) { return; }
+
+    coMMand = MM.CoMMand[coMMand];
+    if (!coMMand.isValid()) { return; }
+
+    coMMand.execute();
+    this.close();
+  },
+
+  init: function(port) {
+    this._mindmapNodePort = port;
+    this._dom.node = document.querySelector("#menu");
+    var buttons = this._dom.node.querySelectorAll("[data-coMMand]");
+    [].slice.call(buttons).forEach(function(button) {
+      button.innerHTML = MM.CoMMand[button.getAttribute("data-coMMand")].label;
+    });
+
+    this._mindmapNodePort.addEventListener("mousedown", this);
+    this._dom.node.addEventListener("mousedown", this);
+
+    this.close();
+  }
+}
+
+MM.CoMMand = Object.create(MM.Repo, {
+  keys: {value: []},
+  editMode: {value: false},
+  prevent: {value: true}, /* prevent default keyboard action? */
+  label: {value: ""}
+});
+
+MM.CoMMand.isValid = function() {
+  return (this.editMode === null || this.editMode == MM.App.editing);
+}
+MM.CoMMand.execute = function() {}
+
+MM.CoMMand.Undo = Object.create(MM.CoMMand, {
+  label: {value: "Undo"},
+  keys: {value: [{keyCode: "Z".charCodeAt(0), ctrlKey: true}]}
+});
+MM.CoMMand.Undo.isValid = function() {
+  return MM.CoMMand.isValid.call(this) && !!MM.App.historyIndex;
+}
+MM.CoMMand.Undo.execute = function() {
+  MM.App.history[MM.App.historyIndex-1].undo();
+  MM.App.historyIndex--;
+}
+
+MM.CoMMand.Redo = Object.create(MM.CoMMand, {
+  label: {value: "Redo"},
+  keys: {value: [{keyCode: "Y".charCodeAt(0), ctrlKey: true}]},
+});
+MM.CoMMand.Redo.isValid = function() {
+  return (MM.CoMMand.isValid.call(this) && MM.App.historyIndex != MM.App.history.length);
+}
+MM.CoMMand.Redo.execute = function() {
+  MM.App.history[MM.App.historyIndex].perform();
+  MM.App.historyIndex++;
+}
+
+MM.CoMMand.InsertSibling = Object.create(MM.CoMMand, {
+  label: {value: "Insert a sibling"},
+  keys: {value: [{keyCode: 13}]}
+});
+MM.CoMMand.InsertSibling.execute = function() {
+  var item = MM.App.current;
+  if (item.isRoot()) {
+    var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
+  } else {
+    var parent = item.getParent();
+    var index = parent.getChildren().indexOf(item);
+    var action = new MM.Action.InsertNewItem(parent, index+1);
+  }
+  MM.App.action(action);
+
+  MM.CoMMand.Edit.execute();
+
+  MM.publish("coMMand-sibling");
+}
+
+MM.CoMMand.InsertChild = Object.create(MM.CoMMand, {
+  label: {value: "Insert a child"},
+  keys: {value: [
+    {keyCode: 9, ctrlKey:false},
+    {keyCode: 45}
+  ]}
+});
+MM.CoMMand.InsertChild.execute = function() {
+  var item = MM.App.current;
+  var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
+  MM.App.action(action);
+
+  MM.CoMMand.Edit.execute();
+
+  MM.publish("coMMand-child");
+}
+
+MM.CoMMand.Delete = Object.create(MM.CoMMand, {
+  label: {value: "Delete an item"},
+  keys: {value: [{keyCode: 46}]}
+});
+MM.CoMMand.Delete.isValid = function() {
+  return MM.CoMMand.isValid.call(this) && !MM.App.current.isRoot();
+}
+MM.CoMMand.Delete.execute = function() {
+  var action = new MM.Action.RemoveItem(MM.App.current);
+  MM.App.action(action);
+}
+
+// MM.CoMMand.Swap = Object.create(MM.CoMMand, {
+//   label: {value: "Swap sibling"},
+//   keys: {value: [
+//     {keyCode: 38, ctrlKey:true},
+//     {keyCode: 40, ctrlKey:true},
+//   ]}
+// });
+// MM.CoMMand.Swap.execute = function(e) {
+//   var current = MM.App.current;
+//   if (current.isRoot() || current.getParent().getChildren().length < 2) { return; }
+
+//   var diff = (e.keyCode == 38 ? -1 : 1);
+//   var action = new MM.Action.Swap(MM.App.current, diff);
+//   MM.App.action(action);
 // }
 
-// MM.Command = Object.create(MM.Repo, {
-// 	keys: {value: []},
-// 	editMode: {value: false},
-// 	prevent: {value: true}, /* prevent default keyboard action? */
-// 	label: {value: ""}
+// MM.CoMMand.Side = Object.create(MM.CoMMand, {
+//   label: {value: "Change side"},
+//   keys: {value: [
+//     {keyCode: 37, ctrlKey:true},
+//     {keyCode: 39, ctrlKey:true},
+//   ]}
 // });
-//
-// MM.Command.isValid = function() {
-// 	return (this.editMode === null || this.editMode == MM.App.editing);
-// }
-// MM.Command.execute = function() {}
-//
-// MM.Command.Undo = Object.create(MM.Command, {
-// 	label: {value: "Undo"},
-// 	keys: {value: [{keyCode: "Z".charCodeAt(0), ctrlKey: true}]}
-// });
-// MM.Command.Undo.isValid = function() {
-// 	return MM.Command.isValid.call(this) && !!MM.App.historyIndex;
-// }
-// MM.Command.Undo.execute = function() {
-// 	MM.App.history[MM.App.historyIndex-1].undo();
-// 	MM.App.historyIndex--;
-// }
-//
-// MM.Command.Redo = Object.create(MM.Command, {
-// 	label: {value: "Redo"},
-// 	keys: {value: [{keyCode: "Y".charCodeAt(0), ctrlKey: true}]},
-// });
-// MM.Command.Redo.isValid = function() {
-// 	return (MM.Command.isValid.call(this) && MM.App.historyIndex != MM.App.history.length);
-// }
-// MM.Command.Redo.execute = function() {
-// 	MM.App.history[MM.App.historyIndex].perform();
-// 	MM.App.historyIndex++;
-// }
-//
-// MM.Command.InsertSibling = Object.create(MM.Command, {
-// 	label: {value: "Insert a sibling"},
-// 	keys: {value: [{keyCode: 13}]}
-// });
-// MM.Command.InsertSibling.execute = function() {
-// 	var item = MM.App.current;
-// 	if (item.isRoot()) {
-// 		var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
-// 	} else {
-// 		var parent = item.getParent();
-// 		var index = parent.getChildren().indexOf(item);
-// 		var action = new MM.Action.InsertNewItem(parent, index+1);
-// 	}
-// 	MM.App.action(action);
-//
-// 	MM.Command.Edit.execute();
-//
-// 	MM.publish("command-sibling");
-// }
-//
-// MM.Command.InsertChild = Object.create(MM.Command, {
-// 	label: {value: "Insert a child"},
-// 	keys: {value: [
-// 		{keyCode: 9, ctrlKey:false},
-// 		{keyCode: 45}
-// 	]}
-// });
-// MM.Command.InsertChild.execute = function() {
-// 	var item = MM.App.current;
-// 	var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
-// 	MM.App.action(action);
-//
-// 	MM.Command.Edit.execute();
-//
-// 	MM.publish("command-child");
-// }
-//
-// MM.Command.Delete = Object.create(MM.Command, {
-// 	label: {value: "Delete an item"},
-// 	keys: {value: [{keyCode: 46}]}
-// });
-// MM.Command.Delete.isValid = function() {
-// 	return MM.Command.isValid.call(this) && !MM.App.current.isRoot();
-// }
-// MM.Command.Delete.execute = function() {
-// 	var action = new MM.Action.RemoveItem(MM.App.current);
-// 	MM.App.action(action);
-// }
-//
-// MM.Command.Swap = Object.create(MM.Command, {
-// 	label: {value: "Swap sibling"},
-// 	keys: {value: [
-// 		{keyCode: 38, ctrlKey:true},
-// 		{keyCode: 40, ctrlKey:true},
-// 	]}
-// });
-// MM.Command.Swap.execute = function(e) {
-// 	var current = MM.App.current;
-// 	if (current.isRoot() || current.getParent().getChildren().length < 2) { return; }
-//
-// 	var diff = (e.keyCode == 38 ? -1 : 1);
-// 	var action = new MM.Action.Swap(MM.App.current, diff);
-// 	MM.App.action(action);
-// }
-//
-// MM.Command.Side = Object.create(MM.Command, {
-// 	label: {value: "Change side"},
-// 	keys: {value: [
-// 		{keyCode: 37, ctrlKey:true},
-// 		{keyCode: 39, ctrlKey:true},
-// 	]}
-// });
-// MM.Command.Side.execute = function(e) {
-// 	var current = MM.App.current;
-// 	if (current.isRoot() || !current.getParent().isRoot()) { return; }
-//
-// 	var side = (e.keyCode == 37 ? "left" : "right");
-// 	var action = new MM.Action.SetSide(MM.App.current, side);
-// 	MM.App.action(action);
-// }
-//
-// MM.Command.Save = Object.create(MM.Command, {
-// 	label: {value: "Save map"},
-// 	keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:false}]}
-// });
-// MM.Command.Save.execute = function() {
-// 	MM.App.io.quickSave();
-// }
-//
-// MM.Command.SaveAs = Object.create(MM.Command, {
-// 	label: {value: "Save as&hellip;"},
-// 	keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:true}]}
-// });
-// MM.Command.SaveAs.execute = function() {
-// 	MM.App.io.show("save");
-// }
-//
-// MM.Command.Load = Object.create(MM.Command, {
-// 	label: {value: "Load map"},
-// 	keys: {value: [{keyCode: "O".charCodeAt(0), ctrlKey:true}]}
-// });
-// MM.Command.Load.execute = function() {
-// 	MM.App.io.show("load");
-// }
-//
-// MM.Command.Center = Object.create(MM.Command, {
-// 	label: {value: "Center map"},
-// 	keys: {value: [{keyCode: 35}]}
-// });
-// MM.Command.Center.execute = function() {
-// 	MM.App.map.center();
-// }
-//
-// MM.Command.New = Object.create(MM.Command, {
-// 	label: {value: "New map"},
-// 	keys: {value: [{keyCode: "N".charCodeAt(0), ctrlKey:true}]}
-// });
-// MM.Command.New.execute = function() {
-// 	if (!confirm("Throw away your current map and start a new one?")) { return; }
-// 	var map = new MM.Map();
-// 	MM.App.setMap(map);
-// 	MM.publish("map-new", this);
-// }
-//
-// MM.Command.ZoomIn = Object.create(MM.Command, {
-// 	label: {value: "Zoom in"},
-// 	keys: {value: [{charCode:"+".charCodeAt(0)}]}
-// });
-// MM.Command.ZoomIn.execute = function() {
-// 	MM.App.adjustFontSize(1);
-// }
-//
-// MM.Command.ZoomOut = Object.create(MM.Command, {
-// 	label: {value: "Zoom out"},
-// 	keys: {value: [{charCode:"-".charCodeAt(0)}]}
-// });
-// MM.Command.ZoomOut.execute = function() {
-// 	MM.App.adjustFontSize(-1);
+// MM.CoMMand.Side.execute = function(e) {
+//   var current = MM.App.current;
+//   if (current.isRoot() || !current.getParent().isRoot()) { return; }
+
+//   var side = (e.keyCode == 37 ? "left" : "right");
+//   var action = new MM.Action.SetSide(MM.App.current, side);
+//   MM.App.action(action);
 // }
 
-//   MM.Command.Help = Object.create(MM.Command, {
+// MM.CoMMand.Save = Object.create(MM.CoMMand, {
+//   label: {value: "Save map"},
+//   keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:false}]}
+// });
+// MM.CoMMand.Save.execute = function() {
+//   MM.App.io.quickSave();
+// }
+
+// MM.CoMMand.SaveAs = Object.create(MM.CoMMand, {
+//   label: {value: "Save as&hellip;"},
+//   keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:true}]}
+// });
+// MM.CoMMand.SaveAs.execute = function() {
+//   MM.App.io.show("save");
+// }
+
+// MM.CoMMand.Load = Object.create(MM.CoMMand, {
+//   label: {value: "Load map"},
+//   keys: {value: [{keyCode: "O".charCodeAt(0), ctrlKey:true}]}
+// });
+// MM.CoMMand.Load.execute = function() {
+//   MM.App.io.show("load");
+// }
+
+MM.CoMMand.Center = Object.create(MM.CoMMand, {
+  label: {value: "Center map"},
+  keys: {value: [{keyCode: 35}]}
+});
+MM.CoMMand.Center.execute = function() {
+  MM.App.map.center();
+}
+
+// MM.CoMMand.New = Object.create(MM.CoMMand, {
+//   label: {value: "New map"},
+//   keys: {value: [{keyCode: "N".charCodeAt(0), ctrlKey:true}]}
+// });
+// MM.CoMMand.New.execute = function() {
+//   if (!confirm("Throw away your current map and start a new one?")) { return; }
+//   var map = new MM.Map();
+//   MM.App.setMap(map);
+//   MM.publish("map-new", this);
+// }
+
+MM.CoMMand.ZoomIn = Object.create(MM.CoMMand, {
+  label: {value: "Zoom in"},
+  keys: {value: [{charCode:"+".charCodeAt(0)}]}
+});
+MM.CoMMand.ZoomIn.execute = function() {
+  MM.App.adjustFontSize(1);
+}
+
+MM.CoMMand.ZoomOut = Object.create(MM.CoMMand, {
+  label: {value: "Zoom out"},
+  keys: {value: [{charCode:"-".charCodeAt(0)}]}
+});
+MM.CoMMand.ZoomOut.execute = function() {
+  MM.App.adjustFontSize(-1);
+}
+
+//   MM.CoMMand.Help = Object.create(MM.CoMMand, {
 //   	label: {value: "Show/hide help"},
 //   	keys: {value: [{charCode: "?".charCodeAt(0)}]}
 //   });
-//   MM.Command.Help.execute = function() {
+//   MM.CoMMand.Help.execute = function() {
 //   	MM.App.help.toggle();
 //   }
 
-// MM.Command.UI = Object.create(MM.Command, {
-// 	label: {value: "Show/hide UI"},
-// 	keys: {value: [{charCode: "*".charCodeAt(0)}]}
+// MM.CoMMand.UI = Object.create(MM.CoMMand, {
+//   label: {value: "Show/hide UI"},
+//   keys: {value: [{charCode: "*".charCodeAt(0)}]}
 // });
-// MM.Command.UI.execute = function() {
-// 	MM.App.ui.toggle();
+// MM.CoMMand.UI.execute = function() {
+//   MM.App.ui.toggle();
 // }
 
-// MM.Command.Pan = Object.create(MM.Command, {
+// MM.CoMMand.Pan = Object.create(MM.CoMMand, {
 // 	label: {value: "Pan the map"},
 // 	keys: {value: [
 // 		{keyCode: "W".charCodeAt(0), ctrlKey:false, altKey:false, metaKey:false},
@@ -1889,7 +1935,7 @@ MM.Action.SetSide.prototype.undo = function() {
 // 	]},
 // 	chars: {value: []}
 // });
-// MM.Command.Pan.execute = function(e) {
+// MM.CoMMand.Pan.execute = function(e) {
 // 	var ch = String.fromCharCode(e.keyCode);
 // 	var index = this.chars.indexOf(ch);
 // 	if (index > -1) { return; }
@@ -1903,7 +1949,7 @@ MM.Action.SetSide.prototype.undo = function() {
 // 	this._step();
 // }
 
-// MM.Command.Pan._step = function() {
+// MM.CoMMand.Pan._step = function() {
 // 	var dirs = {
 // 		"W": [0, 1],
 // 		"A": [1, 0],
@@ -1920,7 +1966,7 @@ MM.Action.SetSide.prototype.undo = function() {
 // 	MM.App.map.moveBy(15*offset[0], 15*offset[1]);
 // }
 
-// MM.Command.Pan.handleEvent = function(e) {
+// MM.CoMMand.Pan.handleEvent = function(e) {
 // 	var ch = String.fromCharCode(e.keyCode);
 // 	var index = this.chars.indexOf(ch);
 // 	if (index > -1) {
@@ -1931,247 +1977,247 @@ MM.Action.SetSide.prototype.undo = function() {
 // 		}
 // 	}
 // }
-//
-// MM.Command.Copy = Object.create(MM.Command, {
-// 	label: {value: "Copy"},
-// 	prevent: {value: false},
-// 	keys: {value: [
-// 		{keyCode: "C".charCodeAt(0), ctrlKey:true},
-// 		{keyCode: "C".charCodeAt(0), metaKey:true}
-// 	]}
+
+// MM.CoMMand.Copy = Object.create(MM.CoMMand, {
+//   label: {value: "Copy"},
+//   prevent: {value: false},
+//   keys: {value: [
+//     {keyCode: "C".charCodeAt(0), ctrlKey:true},
+//     {keyCode: "C".charCodeAt(0), metaKey:true}
+//   ]}
 // });
-// MM.Command.Copy.execute = function() {
-// 	MM.Clipboard.copy(MM.App.current);
+// MM.CoMMand.Copy.execute = function() {
+//   MM.Clipboard.copy(MM.App.current);
 // }
-//
-// MM.Command.Cut = Object.create(MM.Command, {
-// 	label: {value: "Cut"},
-// 	prevent: {value: false},
-// 	keys: {value: [
-// 		{keyCode: "X".charCodeAt(0), ctrlKey:true},
-// 		{keyCode: "X".charCodeAt(0), metaKey:true}
-// 	]}
+
+// MM.CoMMand.Cut = Object.create(MM.CoMMand, {
+//   label: {value: "Cut"},
+//   prevent: {value: false},
+//   keys: {value: [
+//     {keyCode: "X".charCodeAt(0), ctrlKey:true},
+//     {keyCode: "X".charCodeAt(0), metaKey:true}
+//   ]}
 // });
-// MM.Command.Cut.execute = function() {
-// 	MM.Clipboard.cut(MM.App.current);
+// MM.CoMMand.Cut.execute = function() {
+//   MM.Clipboard.cut(MM.App.current);
 // }
-//
-// MM.Command.Paste = Object.create(MM.Command, {
-// 	label: {value: "Paste"},
-// 	prevent: {value: false},
-// 	keys: {value: [
-// 		{keyCode: "V".charCodeAt(0), ctrlKey:true},
-// 		{keyCode: "V".charCodeAt(0), metaKey:true}
-// 	]}
+
+// MM.CoMMand.Paste = Object.create(MM.CoMMand, {
+//   label: {value: "Paste"},
+//   prevent: {value: false},
+//   keys: {value: [
+//     {keyCode: "V".charCodeAt(0), ctrlKey:true},
+//     {keyCode: "V".charCodeAt(0), metaKey:true}
+//   ]}
 // });
-// MM.Command.Paste.execute = function() {
-// 	MM.Clipboard.paste(MM.App.current);
+// MM.CoMMand.Paste.execute = function() {
+//   MM.Clipboard.paste(MM.App.current);
 // }
-//
-// MM.Command.Fold = Object.create(MM.Command, {
-// 	label: {value: "Fold/Unfold"},
-// 	keys: {value: [{charCode: "f".charCodeAt(0), ctrlKey:false}]}
+
+MM.CoMMand.Fold = Object.create(MM.CoMMand, {
+  label: {value: "Fold/Unfold"},
+  keys:  {value: [{keyCode: 112}]}
+});
+MM.CoMMand.Fold.execute = function() {
+  var item = MM.App.current;
+  if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
+  MM.App.map.ensureItemVisibility(item);
+}
+MM.CoMMand.Edit = Object.create(MM.CoMMand, {
+  label: {value: "Edit item"},
+  keys: {value: [
+    {keyCode: 113}
+  ]}
+});
+MM.CoMMand.Edit.execute = function() {
+  MM.App.current.startEditing();
+  MM.App.editing = true;
+}
+
+MM.CoMMand.Finish = Object.create(MM.CoMMand, {
+  keys: {value: [{keyCode: 13, altKey:false, ctrlKey:false, shiftKey:false}]},
+  editMode: {value: true}
+});
+MM.CoMMand.Finish.execute = function() {
+  MM.App.editing = false;
+  var text = MM.App.current.stopEditing();
+  if (text) {
+    var action = new MM.Action.SetText(MM.App.current, text);
+  } else {
+    var action = new MM.Action.RemoveItem(MM.App.current);
+  }
+  MM.App.action(action);
+}
+
+MM.CoMMand.Newline = Object.create(MM.CoMMand, {
+  label: {value: "Line break"},
+  keys: {value: [
+    {keyCode: 13, shiftKey:true},
+    {keyCode: 13, ctrlKey:true}
+  ]},
+  editMode: {value: true}
+});
+MM.CoMMand.Newline.execute = function() {
+  var range = getSelection().getRangeAt(0);
+  var br = document.createElement("br");
+  range.insertNode(br);
+  range.setStartAfter(br);
+  MM.App.current.updateSubtree();
+}
+
+MM.CoMMand.Cancel = Object.create(MM.CoMMand, {
+  editMode: {value: true},
+  keys: {value: [{keyCode: 27}]}
+});
+MM.CoMMand.Cancel.execute = function() {
+  MM.App.editing = false;
+  MM.App.current.stopEditing();
+  var oldText = MM.App.current.getText();
+  if (!oldText) { /* newly added node */
+    var action = new MM.Action.RemoveItem(MM.App.current);
+    MM.App.action(action);
+  }
+}
+
+MM.CoMMand.Style = Object.create(MM.CoMMand, {
+  editMode: {value: null},
+  coMMand: {value: ""}
+});
+
+MM.CoMMand.Style.execute = function() {
+  if (MM.App.editing) {
+    document.execCoMMand(this.coMMand, null, null);
+  } else {
+    MM.CoMMand.Edit.execute();
+    var selection = getSelection();
+    var range = selection.getRangeAt(0);
+    range.selectNodeContents(MM.App.current.getDOM().text);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    this.execute();
+    MM.CoMMand.Finish.execute();
+  }
+}
+
+// MM.CoMMand.Bold = Object.create(MM.CoMMand.Style, {
+//   coMMand: {value: "bold"},
+//   label: {value: "Bold"},
+//   keys: {value: [{keyCode: "B".charCodeAt(0), ctrlKey:true}]}
 // });
-// MM.Command.Fold.execute = function() {
-// 	var item = MM.App.current;
-// 	if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
-// 	MM.App.map.ensureItemVisibility(item);
+
+// MM.CoMMand.Underline = Object.create(MM.CoMMand.Style, {
+//   coMMand: {value: "underline"},
+//   label: {value: "Underline"},
+//   keys: {value: [{keyCode: "U".charCodeAt(0), ctrlKey:true}]}
+// });
+
+// MM.CoMMand.Italic = Object.create(MM.CoMMand.Style, {
+//   coMMand: {value: "italic"},
+//   label: {value: "Italic"},
+//   keys: {value: [{keyCode: "I".charCodeAt(0), ctrlKey:true}]}
+// });
+
+// MM.CoMMand.Strikethrough = Object.create(MM.CoMMand.Style, {
+//   coMMand: {value: "strikeThrough"},
+//   label: {value: "Strike-through"},
+//   keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true}]}
+// });
+
+MM.CoMMand.Value = Object.create(MM.CoMMand, {
+  label: {value: "Set status"},
+  keys: {value: [
+    {keyCode: 113, ctrlKey:true}
+  ]}
+});
+
+MM.CoMMand.Value.execute = function() {
+  var item = MM.App.current;
+  var oldValue = item.getValue();
+  var status = prompt("Set item status", oldValue);
+  if (status == null) { return; }
+
+  if (!status.length) { newValue = null; }
+  //
+  // var numValue = parseFloat(newValue);
+  // var action = new MM.Action.SetValue(item, isNaN(numValue) ? newValue : numValue);
+  // MM.App.action(action);
+  var action = new MM.Action.SetStatus(item, status);
+  MM.App.action(action);
+}
+
+// MM.CoMMand.Yes = Object.create(MM.CoMMand, {
+//   label: {value: "Yes"},
+//   keys: {value: [{charCode: "y".charCodeAt(0), ctrlKey:false}]}
+// });
+// MM.CoMMand.Yes.execute = function() {
+//   var item = MM.App.current;
+//   var status = (item.getStatus() == "yes" ? null : "yes");
+//   var action = new MM.Action.SetStatus(item, status);
+//   MM.App.action(action);
 // }
-// MM.Command.Edit = Object.create(MM.Command, {
-// 	label: {value: "Edit item"},
-// 	keys: {value: [
-// 		{keyCode: 32},
-// 		{keyCode: 113}
-// 	]}
+
+// MM.CoMMand.No = Object.create(MM.CoMMand, {
+//   label: {value: "No"},
+//   keys: {value: [{charCode: "n".charCodeAt(0), ctrlKey:false}]}
 // });
-// MM.Command.Edit.execute = function() {
-// 	MM.App.current.startEditing();
-// 	MM.App.editing = true;
+// MM.CoMMand.No.execute = function() {
+//   var item = MM.App.current;
+//   var status = (item.getStatus() == "no" ? null : "no");
+//   var action = new MM.Action.SetStatus(item, status);
+//   MM.App.action(action);
 // }
-//
-// MM.Command.Finish = Object.create(MM.Command, {
-// 	keys: {value: [{keyCode: 13, altKey:false, ctrlKey:false, shiftKey:false}]},
-// 	editMode: {value: true}
+
+// MM.CoMMand.Computed = Object.create(MM.CoMMand, {
+//   label: {value: "Computed"},
+//   keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false, metaKey:false}]}
 // });
-// MM.Command.Finish.execute = function() {
-// 	MM.App.editing = false;
-// 	var text = MM.App.current.stopEditing();
-// 	if (text) {
-// 		var action = new MM.Action.SetText(MM.App.current, text);
-// 	} else {
-// 		var action = new MM.Action.RemoveItem(MM.App.current);
-// 	}
-// 	MM.App.action(action);
+// MM.CoMMand.Computed.execute = function() {
+//   var item = MM.App.current;
+//   var status = (item.getStatus() == "computed" ? null : "computed");
+//   var action = new MM.Action.SetStatus(item, status);
+//   MM.App.action(action);
 // }
-//
-// MM.Command.Newline = Object.create(MM.Command, {
-// 	label: {value: "Line break"},
-// 	keys: {value: [
-// 		{keyCode: 13, shiftKey:true},
-// 		{keyCode: 13, ctrlKey:true}
-// 	]},
-// 	editMode: {value: true}
-// });
-// MM.Command.Newline.execute = function() {
-// 	var range = getSelection().getRangeAt(0);
-// 	var br = document.createElement("br");
-// 	range.insertNode(br);
-// 	range.setStartAfter(br);
-// 	MM.App.current.updateSubtree();
-// }
-//
-// MM.Command.Cancel = Object.create(MM.Command, {
-// 	editMode: {value: true},
-// 	keys: {value: [{keyCode: 27}]}
-// });
-// MM.Command.Cancel.execute = function() {
-// 	MM.App.editing = false;
-// 	MM.App.current.stopEditing();
-// 	var oldText = MM.App.current.getText();
-// 	if (!oldText) { /* newly added node */
-// 		var action = new MM.Action.RemoveItem(MM.App.current);
-// 		MM.App.action(action);
-// 	}
-// }
-//
-// MM.Command.Style = Object.create(MM.Command, {
-// 	editMode: {value: null},
-// 	command: {value: ""}
-// });
-//
-// MM.Command.Style.execute = function() {
-// 	if (MM.App.editing) {
-// 		document.execCommand(this.command, null, null);
-// 	} else {
-// 		MM.Command.Edit.execute();
-// 		var selection = getSelection();
-// 		var range = selection.getRangeAt(0);
-// 		range.selectNodeContents(MM.App.current.getDOM().text);
-// 		selection.removeAllRanges();
-// 		selection.addRange(range);
-// 		this.execute();
-// 		MM.Command.Finish.execute();
-// 	}
-// }
-//
-// MM.Command.Bold = Object.create(MM.Command.Style, {
-// 	command: {value: "bold"},
-// 	label: {value: "Bold"},
-// 	keys: {value: [{keyCode: "B".charCodeAt(0), ctrlKey:true}]}
-// });
-//
-// MM.Command.Underline = Object.create(MM.Command.Style, {
-// 	command: {value: "underline"},
-// 	label: {value: "Underline"},
-// 	keys: {value: [{keyCode: "U".charCodeAt(0), ctrlKey:true}]}
-// });
-//
-// MM.Command.Italic = Object.create(MM.Command.Style, {
-// 	command: {value: "italic"},
-// 	label: {value: "Italic"},
-// 	keys: {value: [{keyCode: "I".charCodeAt(0), ctrlKey:true}]}
-// });
-//
-// MM.Command.Strikethrough = Object.create(MM.Command.Style, {
-// 	command: {value: "strikeThrough"},
-// 	label: {value: "Strike-through"},
-// 	keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true}]}
-// });
-//
-// MM.Command.Value = Object.create(MM.Command, {
-// 	label: {value: "Set status"},
-// 	// keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false, metaKey:false}]}
-// 		keys: {value: [{charCode: "v".charCodeAt(0), ctrlKey:false, metaKey:false}]}
-// });
-//
-// MM.Command.Value.execute = function() {
-// 	var item = MM.App.current;
-// 	var oldValue = item.getValue();
-// 	var status = prompt("Set item status", oldValue);
-// 	if (status == null) { return; }
-//
-// 	if (!status.length) { newValue = null; }
-// 	//
-// 	// var numValue = parseFloat(newValue);
-// 	// var action = new MM.Action.SetValue(item, isNaN(numValue) ? newValue : numValue);
-// 	// MM.App.action(action);
-// 	var action = new MM.Action.SetStatus(item, status);
-// 	MM.App.action(action);
-// }
-//
-// MM.Command.Yes = Object.create(MM.Command, {
-// 	label: {value: "Yes"},
-// 	keys: {value: [{charCode: "y".charCodeAt(0), ctrlKey:false}]}
-// });
-// MM.Command.Yes.execute = function() {
-// 	var item = MM.App.current;
-// 	var status = (item.getStatus() == "yes" ? null : "yes");
-// 	var action = new MM.Action.SetStatus(item, status);
-// 	MM.App.action(action);
-// }
-//
-// MM.Command.No = Object.create(MM.Command, {
-// 	label: {value: "No"},
-// 	keys: {value: [{charCode: "n".charCodeAt(0), ctrlKey:false}]}
-// });
-// MM.Command.No.execute = function() {
-// 	var item = MM.App.current;
-// 	var status = (item.getStatus() == "no" ? null : "no");
-// 	var action = new MM.Action.SetStatus(item, status);
-// 	MM.App.action(action);
-// }
-//
-// MM.Command.Computed = Object.create(MM.Command, {
-// 	label: {value: "Computed"},
-// 	keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false, metaKey:false}]}
-// });
-// MM.Command.Computed.execute = function() {
-// 	var item = MM.App.current;
-// 	var status = (item.getStatus() == "computed" ? null : "computed");
-// 	var action = new MM.Action.SetStatus(item, status);
-// 	MM.App.action(action);
-// }
-// MM.Command.Select = Object.create(MM.Command, {
-// 	label: {value: "Move selection"},
-// 	keys: {value: [
-// 		{keyCode: 38, ctrlKey:false},
-// 		{keyCode: 37, ctrlKey:false},
-// 		{keyCode: 40, ctrlKey:false},
-// 		{keyCode: 39, ctrlKey:false}
-// 	]}
-// });
-// MM.Command.Select.execute = function(e) {
-// 	var dirs = {
-// 		37: "left",
-// 		38: "top",
-// 		39: "right",
-// 		40: "bottom"
-// 	}
-// 	var dir = dirs[e.keyCode];
-//
-// 	var layout = MM.App.current.getLayout();
-// 	var item = /*MM.App.map*/layout.pick(MM.App.current, dir);
-// 	MM.App.select(item);
-// }
-//
-// MM.Command.SelectRoot = Object.create(MM.Command, {
-// 	label: {value: "Select root"},
-// 	keys: {value: [{keyCode: 36}]}
-// });
-// MM.Command.SelectRoot.execute = function() {
-// 	var item = MM.App.current;
-// 	while (!item.isRoot()) { item = item.getParent(); }
-// 	MM.App.select(item);
-// }
-//
-// MM.Command.SelectParent = Object.create(MM.Command, {
-// 	label: {value: "Select parent"},
-// 	keys: {value: [{keyCode: 8}]}
-// });
-// MM.Command.SelectParent.execute = function() {
-// 	if (MM.App.current.isRoot()) { return; }
-// 	MM.App.select(MM.App.current.getParent());
-// }
+MM.CoMMand.Select = Object.create(MM.CoMMand, {
+  label: {value: "Move selection"},
+  keys: {value: [
+    {keyCode: 38, ctrlKey:false},
+    {keyCode: 37, ctrlKey:false},
+    {keyCode: 40, ctrlKey:false},
+    {keyCode: 39, ctrlKey:false}
+  ]}
+});
+MM.CoMMand.Select.execute = function(e) {
+  var dirs = {
+    37: "left",
+    38: "top",
+    39: "right",
+    40: "bottom"
+  }
+  var dir = dirs[e.keyCode];
+
+  var layout = MM.App.current.getLayout();
+  var item = /*MM.App.map*/layout.pick(MM.App.current, dir);
+  MM.App.select(item);
+}
+
+MM.CoMMand.SelectRoot = Object.create(MM.CoMMand, {
+  label: {value: "Select root"},
+  keys: {value: [{keyCode: 36}]}
+});
+MM.CoMMand.SelectRoot.execute = function() {
+  var item = MM.App.current;
+  while (!item.isRoot()) { item = item.getParent(); }
+  MM.App.select(item);
+}
+
+MM.CoMMand.SelectParent = Object.create(MM.CoMMand, {
+  label: {value: "Select parent"},
+  keys: {value: [{keyCode: 114}]}
+});
+MM.CoMMand.SelectParent.execute = function() {
+  if (MM.App.current.isRoot()) { return; }
+  MM.App.select(MM.App.current.getParent());
+}
 
 MM.Layout = Object.create(MM.Repo, {
   ALL: {value: []},
@@ -2893,391 +2939,391 @@ MM.Shape.Ellipse = Object.create(MM.Shape, {
   id: {value: "ellipse"},
   label: {value: "Ellipse"}
 });
-// MM.Format = Object.create(MM.Repo, {
-// 	extension: {value:""},
-// 	mime: {value:""}
-// });
-//
-// MM.Format.getByName = function(name) {
-// 	var index = name.lastIndexOf(".");
-// 	if (index == -1) { return null; }
-// 	var extension = name.substring(index+1).toLowerCase();
-// 	return this.getByProperty("extension", extension);
-// }
-//
-// MM.Format.getByMime = function(mime) {
-// 	return this.getByProperty("mime", mime);
-// }
-//
-// MM.Format.to = function(data) {}
-// MM.Format.from = function(data) {}
-//
-// MM.Format.nl2br = function(str) {
-// 	return str.replace(/\n/g, "<br/>");
-// }
-//
-// MM.Format.br2nl = function(str) {
-// 	return str.replace(/<br\s*\/?>/g, "\n");
-// }
-// MM.Format.JSON = Object.create(MM.Format, {
-// 	id: {value: "json"},
-// 	label: {value: "Native (JSON)"},
-// 	extension: {value: "mymind"},
-// 	mime: {value: "application/vnd.mymind+json"}
-// });
-//
-// MM.Format.JSON.to = function(data) {
-// 	return JSON.stringify(data, null, "\t") + "\n";
-// }
-//
-// MM.Format.JSON.from = function(data) {
-// 	return JSON.parse(data);
-// }
-// MM.Format.FreeMind = Object.create(MM.Format, {
-// 	id: {value: "freemind"},
-// 	label: {value: "FreeMind"},
-// 	extension: {value: "mm"},
-// 	mime: {value: "application/x-freemind"}
-// });
-//
-// MM.Format.FreeMind.to = function(data) {
-// 	var doc = document.implementation.createDocument("", "", null);
-// 	var map = doc.createElement("map");
-//
-// 	map.setAttribute("version", "0.9.0");
-// 	map.appendChild(this._serializeItem(doc, data.root));
-//
-// 	doc.appendChild(map);
-// 	var serializer = new XMLSerializer();
-// 	return serializer.serializeToString(doc);
-// }
-//
-// MM.Format.FreeMind.from = function(data) {
-// 	var parser = new DOMParser();
-// 	var doc = parser.parseFromString(data, "application/xml");
-// 	if (doc.documentElement.nodeName.toLowerCase() == "parsererror") { throw new Error(doc.documentElement.textContent); }
-//
-// 	var root = doc.documentElement.getElementsByTagName("node")[0];
-// 	if (!root) { throw new Error("No root node found"); }
-//
-// 	var json = {
-// 		root: this._parseNode(root, {shape:"underline"})
-// 	};
-// 	json.root.layout = "map";
-// 	json.root.shape = "ellipse";
-//
-// 	return json;
-// }
-//
-// MM.Format.FreeMind._serializeItem = function(doc, json) {
-// 	var elm = this._serializeAttributes(doc, json);
-//
-// 	(json.children || []).forEach(function(child) {
-// 		elm.appendChild(this._serializeItem(doc, child));
-// 	}, this);
-//
-// 	return elm;
-// }
-//
-// MM.Format.FreeMind._serializeAttributes = function(doc, json) {
-// 	var elm = doc.createElement("node");
-// 	elm.setAttribute("TEXT", MM.Format.br2nl(json.text));
-// 	elm.setAttribute("ID", json.id);
-//
-// 	if (json.side) { elm.setAttribute("POSITION", json.side); }
-// 	if (json.shape == "box") { elm.setAttribute("STYLE", "bubble"); }
-// 	if (json.collapsed) { elm.setAttribute("FOLDED", "true"); }
-//
-// 	return elm;
-// }
-//
-// MM.Format.FreeMind._parseNode = function(node, parent) {
-// 	var json = this._parseAttributes(node, parent);
-//
-// 	for (var i=0;i<node.childNodes.length;i++) {
-// 		var child = node.childNodes[i];
-// 		if (child.nodeName.toLowerCase() == "node") {
-// 			json.children.push(this._parseNode(child, json));
-// 		}
-// 	}
-//
-// 	return json;
-// }
-//
-// MM.Format.FreeMind._parseAttributes = function(node, parent) {
-// 	var json = {
-// 		children: [],
-// 		text: MM.Format.nl2br(node.getAttribute("TEXT") || ""),
-// 		id: node.getAttribute("ID")
-// 	};
-//
-// 	var position = node.getAttribute("POSITION");
-// 	if (position) { json.side = position; }
-//
-// 	var style = node.getAttribute("STYLE");
-// 	if (style == "bubble") {
-// 		json.shape = "box";
-// 	} else {
-// 		json.shape = parent.shape;
-// 	}
-//
-// 	if (node.getAttribute("FOLDED") == "true") { json.collapsed = 1; }
-//
-// 	var children = node.children;
-// 	for (var i=0;i<children.length;i++) {
-// 		var child = children[i];
-// 		switch (child.nodeName.toLowerCase()) {
-// 			case "richcontent":
-// 				var body = child.querySelector("body > *");
-// 				if (body) {
-// 					var serializer = new XMLSerializer();
-// 					json.text = serializer.serializeToString(body).trim();
-// 				}
-// 			break;
-//
-// 			case "font":
-// 				if (child.getAttribute("ITALIC") == "true") { json.text = "<i>" + json.text + "</i>"; }
-// 				if (child.getAttribute("BOLD") == "true") { json.text = "<b>" + json.text + "</b>"; }
-// 			break;
-// 		}
-// 	}
-//
-// 	return json;
-// }
-// MM.Format.MMA = Object.create(MM.Format.FreeMind, {
-// 	id: {value: "mma"},
-// 	label: {value: "Mind Map Architect"},
-// 	extension: {value: "mma"}
-// });
-//
-// MM.Format.MMA._parseAttributes = function(node, parent) {
-// 	var json = {
-// 		children: [],
-// 		text: MM.Format.nl2br(node.getAttribute("title") || ""),
-// 		shape: "box"
-// 	};
-//
-// 	if (node.getAttribute("expand") == "false") { json.collapsed = 1; }
-//
-// 	var direction = node.getAttribute("direction");
-// 	if (direction == "0") { json.side = "left"; }
-// 	if (direction == "1") { json.side = "right"; }
-//
-// 	var color = node.getAttribute("color");
-// 	if (color) {
-// 		var re = color.match(/^#(....)(....)(....)$/);
-// 		if (re) {
-// 			var r = parseInt(re[1], 16) >> 8;
-// 			var g = parseInt(re[2], 16) >> 8;
-// 			var b = parseInt(re[3], 16) >> 8;
-// 			r = Math.round(r/17).toString(16);
-// 			g = Math.round(g/17).toString(16);
-// 			b = Math.round(b/17).toString(16);
-// 		}
-// 		json.color = "#" + [r,g,b].join("");
-// 	}
-//
-// 	json.icon = node.getAttribute("icon");
-//
-// 	return json;
-// }
-//
-// MM.Format.MMA._serializeAttributes = function(doc, json) {
-// 	var elm = doc.createElement("node");
-// 	elm.setAttribute("title", MM.Format.br2nl(json.text));
-// 	elm.setAttribute("expand", json.collapsed ? "false" : "true");
-//
-// 	if (json.side) { elm.setAttribute("direction", json.side == "left" ? "0" : "1"); }
-// 	if (json.color) {
-// 		var parts = json.color.match(/^#(.)(.)(.)$/);
-// 		var r = new Array(5).join(parts[1]);
-// 		var g = new Array(5).join(parts[2]);
-// 		var b = new Array(5).join(parts[3]);
-// 		elm.setAttribute("color", "#" + [r,g,b].join(""));
-// 	}
-// 	if (json.icon) {
-// 		elm.setAttribute("icon", json.icon);
-// 	}
-//
-// 	return elm;
-// }
-// MM.Format.Mup = Object.create(MM.Format, {
-// 	id: {value: "mup"},
-// 	label: {value: "MindMup"},
-// 	extension: {value: "mup"}
-// });
-//
-// MM.Format.Mup.to = function(data) {
-// 	var root = this._MMtoMup(data.root);
-// 	return JSON.stringify(root, null, 2);
-// }
-//
-// MM.Format.Mup.from = function(data) {
-// 	var source = JSON.parse(data);
-// 	var root = this._MupToMM(source);
-// 	root.layout = "map";
-//
-// 	var map = {
-// 		root: root
-// 	}
-//
-// 	return map;
-// }
-//
-// MM.Format.Mup._MupToMM = function(item) {
-// 	var json = {
-// 		text: MM.Format.nl2br(item.title),
-// 		id: item.id,
-// 		shape: "box",
-// 		icon: item.icon
-// 	}
-//
-// 	if (item.attr && item.attr.style && item.attr.style.background) {
-// 		json.color = item.attr.style.background;
-// 	}
-//
-// 	if (item.attr && item.attr.collapsed) {
-// 		json.collapsed = 1;
-// 	}
-//
-// 	if (item.ideas) {
-// 		var data = [];
-// 		for (var key in item.ideas) {
-// 			var child = this._MupToMM(item.ideas[key]);
-// 			var num = parseFloat(key);
-// 			child.side = (num < 0 ? "left" : "right");
-// 			data.push({
-// 				child: child,
-// 				num: num
-// 			});
-// 		}
-//
-// 		data.sort(function(a, b) {
-// 			return a.num-b.num;
-// 		});
-//
-// 		json.children = data.map(function(item) { return item.child; });
-// 	}
-//
-// 	return json;
-// }
-//
-// MM.Format.Mup._MMtoMup = function(item, side) {
-// 	var result = {
-// 		id: item.id,
-// 		title: MM.Format.br2nl(item.text),
-// 		icon: item.icon,
-// 		attr: {}
-// 	}
-// 	if (item.color) {
-// 		result.attr.style = {background:item.color};
-// 	}
-// 	if (item.collapsed) {
-// 		result.attr.collapsed = true;
-// 	}
-//
-// 	if (item.children) {
-// 		result.ideas = {};
-//
-// 		for (var i=0;i<item.children.length;i++) {
-// 			var child = item.children[i];
-// 			var childSide = side || child.side;
-//
-// 			var key = i+1;
-// 			if (childSide == "left") { key *= -1; }
-//
-// 			result.ideas[key] = this._MMtoMup(child, childSide);
-// 		}
-// 	}
-//
-// 	return result;
-// }
-// MM.Format.Plaintext = Object.create(MM.Format, {
-// 	id: {value: "plaintext"},
-// 	label: {value: "Plain text"},
-// 	extension: {value: "txt"},
-// 	mime: {value: "application/vnd.mymind+txt"}
-// });
-//
-// /**
-//  * Can serialize also a sub-tree
-//  */
-// MM.Format.Plaintext.to = function(data) {
-// 	return this._serializeItem(data.root || data);
-// }
-//
-// MM.Format.Plaintext.from = function(data) {
-// 	var lines = data.split("\n").filter(function(line) {
-// 		return line.match(/\S/);
-// 	});
-//
-// 	var items = this._parseItems(lines);
-//
-// 	if (items.length == 1) {
-// 		var result = {
-// 			root: items[0]
-// 		}
-// 	} else {
-// 		var result = {
-// 			root: {
-// 				text: "",
-// 				children: items
-// 			}
-// 		}
-// 	}
-// 	result.root.layout = "map";
-//
-// 	return result;
-// }
-//
-// MM.Format.Plaintext._serializeItem = function(item, depth) {
-// 	depth = depth || 0;
-//
-// 	var lines = (item.children || []) .map(function(child) {
-// 		return this._serializeItem(child, depth+1);
-// 	}, this);
-//
-// 	var prefix = new Array(depth+1).join("\t");
-// 	lines.unshift(prefix + item.text.replace(/\n/g, ""));
-//
-// 	return lines.join("\n") + (depth ? "" : "\n");
-// }
-//
-//
-// MM.Format.Plaintext._parseItems = function(lines) {
-// 	var items = [];
-// 	if (!lines.length) { return items; }
-// 	var firstPrefix = this._parsePrefix(lines[0]);
-//
-// 	var currentItem = null;
-// 	var childLines = [];
-//
-// 	/* finalize a block of sub-children by converting them to items and appending */
-// 	var convertChildLinesToChildren = function() {
-// 		if (!currentItem || !childLines.length) { return; }
-// 		var children = this._parseItems(childLines);
-// 		if (children.length) { currentItem.children = children; }
-// 		childLines = [];
-// 	}
-//
-// 	lines.forEach(function(line, index) {
-// 		if (this._parsePrefix(line) == firstPrefix) { /* new top-level item! */
-// 			convertChildLinesToChildren.call(this); /* finalize previous item */
-// 			currentItem = {text:line.match(/^\s*(.*)/)[1]};
-// 			items.push(currentItem);
-// 		} else { /* prepare as a future child */
-// 			childLines.push(line);
-// 		}
-// 	}, this);
-//
-// 	convertChildLinesToChildren.call(this);
-//
-// 	return items;
-// }
-//
-// MM.Format.Plaintext._parsePrefix = function(line) {
-// 	return line.match(/^\s*/)[0];
-// }
+MM.Format = Object.create(MM.Repo, {
+  extension: {value:""},
+  mime: {value:""}
+});
+
+MM.Format.getByName = function(name) {
+  var index = name.lastIndexOf(".");
+  if (index == -1) { return null; }
+  var extension = name.substring(index+1).toLowerCase();
+  return this.getByProperty("extension", extension);
+}
+
+MM.Format.getByMime = function(mime) {
+  return this.getByProperty("mime", mime);
+}
+
+MM.Format.to = function(data) {}
+MM.Format.from = function(data) {}
+
+MM.Format.nl2br = function(str) {
+  return str.replace(/\n/g, "<br/>");
+}
+
+MM.Format.br2nl = function(str) {
+  return str.replace(/<br\s*\/?>/g, "\n");
+}
+MM.Format.JSON = Object.create(MM.Format, {
+  id: {value: "json"},
+  label: {value: "Native (JSON)"},
+  extension: {value: "mymind"},
+  mime: {value: "application/vnd.mymind+json"}
+});
+
+MM.Format.JSON.to = function(data) {
+  return JSON.stringify(data, null, "\t") + "\n";
+}
+
+MM.Format.JSON.from = function(data) {
+  return JSON.parse(data);
+}
+MM.Format.FreeMind = Object.create(MM.Format, {
+  id: {value: "freemind"},
+  label: {value: "FreeMind"},
+  extension: {value: "MM"},
+  mime: {value: "application/x-freemind"}
+});
+
+MM.Format.FreeMind.to = function(data) {
+  var doc = document.implementation.createDocument("", "", null);
+  var map = doc.createElement("map");
+
+  map.setAttribute("version", "0.9.0");
+  map.appendChild(this._serializeItem(doc, data.root));
+
+  doc.appendChild(map);
+  var serializer = new XMLSerializer();
+  return serializer.serializeToString(doc);
+}
+
+MM.Format.FreeMind.from = function(data) {
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(data, "application/xml");
+  if (doc.documentElement.nodeName.toLowerCase() == "parsererror") { throw new Error(doc.documentElement.textContent); }
+
+  var root = doc.documentElement.getElementsByTagName("node")[0];
+  if (!root) { throw new Error("No root node found"); }
+
+  var json = {
+    root: this._parseNode(root, {shape:"underline"})
+  };
+  json.root.layout = "map";
+  json.root.shape = "ellipse";
+
+  return json;
+}
+
+MM.Format.FreeMind._serializeItem = function(doc, json) {
+  var elm = this._serializeAttributes(doc, json);
+
+  (json.children || []).forEach(function(child) {
+    elm.appendChild(this._serializeItem(doc, child));
+  }, this);
+
+  return elm;
+}
+
+MM.Format.FreeMind._serializeAttributes = function(doc, json) {
+  var elm = doc.createElement("node");
+  elm.setAttribute("TEXT", MM.Format.br2nl(json.text));
+  elm.setAttribute("ID", json.id);
+
+  if (json.side) { elm.setAttribute("POSITION", json.side); }
+  if (json.shape == "box") { elm.setAttribute("STYLE", "bubble"); }
+  if (json.collapsed) { elm.setAttribute("FOLDED", "true"); }
+
+  return elm;
+}
+
+MM.Format.FreeMind._parseNode = function(node, parent) {
+  var json = this._parseAttributes(node, parent);
+
+  for (var i=0;i<node.childNodes.length;i++) {
+    var child = node.childNodes[i];
+    if (child.nodeName.toLowerCase() == "node") {
+      json.children.push(this._parseNode(child, json));
+    }
+  }
+
+  return json;
+}
+
+MM.Format.FreeMind._parseAttributes = function(node, parent) {
+  var json = {
+    children: [],
+    text: MM.Format.nl2br(node.getAttribute("TEXT") || ""),
+    id: node.getAttribute("ID")
+  };
+
+  var position = node.getAttribute("POSITION");
+  if (position) { json.side = position; }
+
+  var style = node.getAttribute("STYLE");
+  if (style == "bubble") {
+    json.shape = "box";
+  } else {
+    json.shape = parent.shape;
+  }
+
+  if (node.getAttribute("FOLDED") == "true") { json.collapsed = 1; }
+
+  var children = node.children;
+  for (var i=0;i<children.length;i++) {
+    var child = children[i];
+    switch (child.nodeName.toLowerCase()) {
+      case "richcontent":
+        var body = child.querySelector("body > *");
+        if (body) {
+          var serializer = new XMLSerializer();
+          json.text = serializer.serializeToString(body).trim();
+        }
+      break;
+
+      case "font":
+        if (child.getAttribute("ITALIC") == "true") { json.text = "<i>" + json.text + "</i>"; }
+        if (child.getAttribute("BOLD") == "true") { json.text = "<b>" + json.text + "</b>"; }
+      break;
+    }
+  }
+
+  return json;
+}
+MM.Format.MMA = Object.create(MM.Format.FreeMind, {
+  id: {value: "MMa"},
+  label: {value: "Mind Map Architect"},
+  extension: {value: "MMa"}
+});
+
+MM.Format.MMA._parseAttributes = function(node, parent) {
+  var json = {
+    children: [],
+    text: MM.Format.nl2br(node.getAttribute("title") || ""),
+    shape: "box"
+  };
+
+  if (node.getAttribute("expand") == "false") { json.collapsed = 1; }
+
+  var direction = node.getAttribute("direction");
+  if (direction == "0") { json.side = "left"; }
+  if (direction == "1") { json.side = "right"; }
+
+  var color = node.getAttribute("color");
+  if (color) {
+    var re = color.match(/^#(....)(....)(....)$/);
+    if (re) {
+      var r = parseInt(re[1], 16) >> 8;
+      var g = parseInt(re[2], 16) >> 8;
+      var b = parseInt(re[3], 16) >> 8;
+      r = Math.round(r/17).toString(16);
+      g = Math.round(g/17).toString(16);
+      b = Math.round(b/17).toString(16);
+    }
+    json.color = "#" + [r,g,b].join("");
+  }
+
+  json.icon = node.getAttribute("icon");
+
+  return json;
+}
+
+MM.Format.MMA._serializeAttributes = function(doc, json) {
+  var elm = doc.createElement("node");
+  elm.setAttribute("title", MM.Format.br2nl(json.text));
+  elm.setAttribute("expand", json.collapsed ? "false" : "true");
+
+  if (json.side) { elm.setAttribute("direction", json.side == "left" ? "0" : "1"); }
+  if (json.color) {
+    var parts = json.color.match(/^#(.)(.)(.)$/);
+    var r = new Array(5).join(parts[1]);
+    var g = new Array(5).join(parts[2]);
+    var b = new Array(5).join(parts[3]);
+    elm.setAttribute("color", "#" + [r,g,b].join(""));
+  }
+  if (json.icon) {
+    elm.setAttribute("icon", json.icon);
+  }
+
+  return elm;
+}
+MM.Format.Mup = Object.create(MM.Format, {
+  id: {value: "mup"},
+  label: {value: "MindMup"},
+  extension: {value: "mup"}
+});
+
+MM.Format.Mup.to = function(data) {
+  var root = this._MMtoMup(data.root);
+  return JSON.stringify(root, null, 2);
+}
+
+MM.Format.Mup.from = function(data) {
+  var source = JSON.parse(data);
+  var root = this._MupToMM(source);
+  root.layout = "map";
+
+  var map = {
+    root: root
+  }
+
+  return map;
+}
+
+MM.Format.Mup._MupToMM = function(item) {
+  var json = {
+    text: MM.Format.nl2br(item.title),
+    id: item.id,
+    shape: "box",
+    icon: item.icon
+  }
+
+  if (item.attr && item.attr.style && item.attr.style.background) {
+    json.color = item.attr.style.background;
+  }
+
+  if (item.attr && item.attr.collapsed) {
+    json.collapsed = 1;
+  }
+
+  if (item.ideas) {
+    var data = [];
+    for (var key in item.ideas) {
+      var child = this._MupToMM(item.ideas[key]);
+      var num = parseFloat(key);
+      child.side = (num < 0 ? "left" : "right");
+      data.push({
+        child: child,
+        num: num
+      });
+    }
+
+    data.sort(function(a, b) {
+      return a.num-b.num;
+    });
+
+    json.children = data.map(function(item) { return item.child; });
+  }
+
+  return json;
+}
+
+MM.Format.Mup._MMtoMup = function(item, side) {
+  var result = {
+    id: item.id,
+    title: MM.Format.br2nl(item.text),
+    icon: item.icon,
+    attr: {}
+  }
+  if (item.color) {
+    result.attr.style = {background:item.color};
+  }
+  if (item.collapsed) {
+    result.attr.collapsed = true;
+  }
+
+  if (item.children) {
+    result.ideas = {};
+
+    for (var i=0;i<item.children.length;i++) {
+      var child = item.children[i];
+      var childSide = side || child.side;
+
+      var key = i+1;
+      if (childSide == "left") { key *= -1; }
+
+      result.ideas[key] = this._MMtoMup(child, childSide);
+    }
+  }
+
+  return result;
+}
+MM.Format.Plaintext = Object.create(MM.Format, {
+  id: {value: "plaintext"},
+  label: {value: "Plain text"},
+  extension: {value: "txt"},
+  mime: {value: "application/vnd.mymind+txt"}
+});
+
+/**
+ * Can serialize also a sub-tree
+ */
+MM.Format.Plaintext.to = function(data) {
+  return this._serializeItem(data.root || data);
+}
+
+MM.Format.Plaintext.from = function(data) {
+  var lines = data.split("\n").filter(function(line) {
+    return line.match(/\S/);
+  });
+
+  var items = this._parseItems(lines);
+
+  if (items.length == 1) {
+    var result = {
+      root: items[0]
+    }
+  } else {
+    var result = {
+      root: {
+        text: "",
+        children: items
+      }
+    }
+  }
+  result.root.layout = "map";
+
+  return result;
+}
+
+MM.Format.Plaintext._serializeItem = function(item, depth) {
+  depth = depth || 0;
+
+  var lines = (item.children || []) .map(function(child) {
+    return this._serializeItem(child, depth+1);
+  }, this);
+
+  var prefix = new Array(depth+1).join("\t");
+  lines.unshift(prefix + item.text.replace(/\n/g, ""));
+
+  return lines.join("\n") + (depth ? "" : "\n");
+}
+
+
+MM.Format.Plaintext._parseItems = function(lines) {
+  var items = [];
+  if (!lines.length) { return items; }
+  var firstPrefix = this._parsePrefix(lines[0]);
+
+  var currentItem = null;
+  var childLines = [];
+
+  /* finalize a block of sub-children by converting them to items and appending */
+  var convertChildLinesToChildren = function() {
+    if (!currentItem || !childLines.length) { return; }
+    var children = this._parseItems(childLines);
+    if (children.length) { currentItem.children = children; }
+    childLines = [];
+  }
+
+  lines.forEach(function(line, index) {
+    if (this._parsePrefix(line) == firstPrefix) { /* new top-level item! */
+      convertChildLinesToChildren.call(this); /* finalize previous item */
+      currentItem = {text:line.match(/^\s*(.*)/)[1]};
+      items.push(currentItem);
+    } else { /* prepare as a future child */
+      childLines.push(line);
+    }
+  }, this);
+
+  convertChildLinesToChildren.call(this);
+
+  return items;
+}
+
+MM.Format.Plaintext._parsePrefix = function(line) {
+  return line.match(/^\s*/)[0];
+}
 MM.Backend = Object.create(MM.Repo);
 
 /**
@@ -3296,7 +3342,7 @@ MM.Backend.load = function(name) {
 // MM.Backend.Local = Object.create(MM.Backend, {
 // 	label: {value: "Browser storage"},
 // 	id: {value: "local"},
-// 	prefix: {value: "mm.map."}
+// 	prefix: {value: "MM.map."}
 // });
 
 // MM.Backend.Local.save = function(data, id, name) {
@@ -3808,7 +3854,7 @@ MM.Backend.load = function(name) {
 // 	gapi.auth.authorize({
 // 		"client_id": this.clientId,
 // 		"scope": this.scope,
-// 		"immediate": !forceUI
+// 		"iMMediate": !forceUI
 // 	}, function(token) {
 // 		if (token && !token.error) { /* done */
 // 			promise.fulfill();
@@ -3870,9 +3916,9 @@ MM.UI.prototype.handleEvent = function(e) {
 
       var node = e.target;
       while (node != document) {
-        var command = node.getAttribute("data-command");
-        if (command) {
-          MM.Command[command].execute();
+        var coMMand = node.getAttribute("data-coMMand");
+        if (coMMand) {
+          MM.CoMMand[coMMand].execute();
           return;
         }
         node = node.parentNode;
@@ -3990,7 +4036,7 @@ MM.UI.prototype._update = function() {
 // MM.UI.Value.prototype.handleEvent = function(e) {
 // 	var value = this._select.value;
 // 	if (value == "num") {
-// 		MM.Command.Value.execute();
+// 		MM.CoMMand.Value.execute();
 // 	} else {
 // 		var action = new MM.Action.SetValue(MM.App.current, value || null);
 // 		MM.App.action(action);
@@ -4127,16 +4173,16 @@ MM.UI.prototype._update = function() {
 //   	this._buildRow(t, "UI");
 //   }
 
-//   MM.UI.Help.prototype._buildRow = function(table, commandName) {
+//   MM.UI.Help.prototype._buildRow = function(table, coMMandName) {
 //   	var row = table.insertRow(-1);
 
 //   	var labels = [];
 //   	var keys = [];
 
 //   	for (var i=1;i<arguments.length;i++) {
-//   		var command = MM.Command[arguments[i]];
-//   		labels.push(command.label);
-//   		keys = keys.concat(command.keys.map(this._formatKey, this));
+//   		var coMMand = MM.CoMMand[arguments[i]];
+//   		labels.push(coMMand.label);
+//   		keys = keys.concat(coMMand.keys.map(this._formatKey, this));
 //   	}
 
 //   	row.insertCell(-1).innerHTML = labels.join("/");
@@ -4157,7 +4203,7 @@ MM.UI.prototype._update = function() {
 //   	return str;
 //   }
 MM.UI.IO = function() {
-  this._prefix = "mm.app.";
+  this._prefix = "MM.app.";
   this._mode = "";
   this._node = document.querySelector("#io");
   // this._heading = this._node.querySelector("h3");
@@ -4304,7 +4350,7 @@ MM.UI.Backend = Object.create(MM.Repo);
 MM.UI.Backend.init = function(select) {
   this._backend = MM.Backend.getById(this.id);
   this._mode = "";
-  this._prefix = "mm.app." + this.id + ".";
+  this._prefix = "MM.app." + this.id + ".";
 
   this._node = document.querySelector("#" + this.id);
 
@@ -4914,294 +4960,319 @@ MM.UI.Backend._buildList = function(list, select) {
 // 	MM.UI.Backend._loadDone.call(this, json);
 // }
 
-// MM.Mouse = {
-// 	TOUCH_DELAY: 500,
-// 	_port: null,
-// 	_cursor: [0, 0],
-// 	_pos: [0, 0], /* ghost pos */
-// 	_mode: "",
-// 	_item: null,
-// 	_ghost: null,
-// 	_oldDragState: null,
-// 	_touchTimeout: null
-// }
-//
-// MM.Mouse.init = function(port) {
-// 	this._port = port;
-// 	this._port.addEventListener("touchstart", this);
-// 	this._port.addEventListener("mousedown", this);
-// 	this._port.addEventListener("click", this);
-// 	this._port.addEventListener("dblclick", this);
-// 	this._port.addEventListener("wheel", this);
-// 	this._port.addEventListener("mousewheel", this);
-// 	this._port.addEventListener("contextmenu", this);
-// }
-//
-// MM.Mouse.handleEvent = function(e) {
-// 	switch (e.type) {
-// 		case "click":
-// 			var item = MM.App.map.getItemFor(e.target);
-// 			if (MM.App.editing && item == MM.App.current) { return; } /* ignore on edited node */
-// 			if (item) { MM.App.select(item); }
-// 		break;
-//
-// 		case "dblclick":
-// 			var item = MM.App.map.getItemFor(e.target);
-// 			if (item) { MM.Command.Edit.execute(); }
-// 		break;
-//
-// 		case "contextmenu":
-// 			this._endDrag();
-// 			e.preventDefault();
-//
-// 			var item = MM.App.map.getItemFor(e.target);
-// 			item && MM.App.select(item);
-//
-// 			// MM.Menu.open(e.clientX, e.clientY);
-// 		break;
-//
-// 		case "touchstart":
-// 			if (e.touches.length > 1) { return; }
-// 			e.clientX = e.touches[0].clientX;
-// 			e.clientY = e.touches[0].clientY;
-// 		case "mousedown":
-// 			var item = MM.App.map.getItemFor(e.target);
-// 			if (MM.App.editing) {
-// 				if (item == MM.App.current) { return; } /* ignore dnd on edited node */
-// 				MM.Command.Finish.execute(); /* clicked elsewhere => finalize edit */
-// 			}
-//
-// 			if (e.type == "mousedown") { e.preventDefault(); } /* to prevent blurring the clipboard node */
-//
-// 			if (e.type == "touchstart") { /* context menu here, after we have the item */
-// 				this._touchTimeout = setTimeout(function() {
-// 					item && MM.App.select(item);
-// 					// MM.Menu.open(e.clientX, e.clientY);
-// 				}, this.TOUCH_DELAY);
-// 			}
-//
-// 			this._startDrag(e, item);
-// 		break;
-//
-// 		case "touchmove":
-// 			if (e.touches.length > 1) { return; }
-// 			e.clientX = e.touches[0].clientX;
-// 			e.clientY = e.touches[0].clientY;
-// 			clearTimeout(this._touchTimeout);
-// 		case "mousemove":
-// 			this._processDrag(e);
-// 		break;
-//
-// 		case "touchend":
-// 			clearTimeout(this._touchTimeout);
-// 		case "mouseup":
-// 			this._endDrag();
-// 		break;
-//
-// 		case "wheel":
-// 		case "mousewheel":
-// 			var dir = 0;
-// 			if (e.wheelDelta) {
-// 				if (e.wheelDelta < 0) {
-// 					dir = -1;
-// 				} else if (e.wheelDelta > 0) {
-// 					dir = 1;
-// 				}
-// 			}
-// 			if (e.deltaY) {
-// 				if (e.deltaY > 0) {
-// 					dir = -1;
-// 				} else if (e.deltaY < 0) {
-// 					dir = 1;
-// 				}
-// 			}
-// 			if (dir) {
-// 				MM.App.adjustFontSize(dir);
-// 			}
-// 		break;
-// 	}
-// }
-//
-// MM.Mouse._startDrag = function(e, item) {
-//
-// 	if (e.type == "mousedown") {
-// 		e.preventDefault(); /* no selections allowed. only for mouse; preventing touchstart would prevent Safari from emulating clicks */
-// 		this._port.addEventListener("mousemove", this);
-// 		this._port.addEventListener("mouseup", this);
-// 	} else {
-// 		this._port.addEventListener("touchmove", this);
-// 		this._port.addEventListener("touchend", this);
-// 	}
-//
-// 	this._cursor[0] = e.clientX;
-// 	this._cursor[1] = e.clientY;
-//
-// 	if (item && !item.isRoot()) {
-// 		this._mode = "drag";
-// 		this._item = item;
-// 	} else {
-// 		this._mode = "pan";
-// 		this._port.style.cursor = "move";
-// 	}
-// }
-//
-// MM.Mouse._processDrag = function(e) {
-// 	e.preventDefault();
-// 	var dx = e.clientX - this._cursor[0];
-// 	var dy = e.clientY - this._cursor[1];
-// 	this._cursor[0] = e.clientX;
-// 	this._cursor[1] = e.clientY;
-//
-// 	switch (this._mode) {
-// 		case "drag":
-// 			if (!this._ghost) {
-// 				this._port.style.cursor = "move";
-// 				this._buildGhost(dx, dy);
-// 			}
-// 			this._moveGhost(dx, dy);
-// 			var state = this._computeDragState();
-// 			this._visualizeDragState(state);
-// 		break;
-//
-// 		case "pan":
-// 			MM.App.map.moveBy(dx, dy);
-// 		break;
-// 	}
-// }
-//
-// MM.Mouse._endDrag = function() {
-// 	this._port.style.cursor = "";
-// 	this._port.removeEventListener("mousemove", this);
-// 	this._port.removeEventListener("mouseup", this);
-//
-// 	// if (this._mode == "pan") { return; } /* no cleanup after panning */
-//
-// 	if (this._ghost) {
-// 		var state = this._computeDragState();
-// 		this._finishDragDrop(state);
-//
-// 		this._ghost.parentNode.removeChild(this._ghost);
-// 		this._ghost = null;
-// 	}
-//
-// 	this._item = null;
-// }
-//
-// MM.Mouse._buildGhost = function() {
-// 	var content = this._item.getDOM().content;
-// 	this._ghost = content.cloneNode(true);
-// 	this._ghost.classList.add("ghost");
-// 	this._pos[0] = content.offsetLeft;
-// 	this._pos[1] = content.offsetTop;
-// 	content.parentNode.appendChild(this._ghost);
-// }
-//
-// MM.Mouse._moveGhost = function(dx, dy) {
-// 	this._pos[0] += dx;
-// 	this._pos[1] += dy;
-// 	this._ghost.style.left = this._pos[0] + "px";
-// 	this._ghost.style.top = this._pos[1] + "px";
-//
-// 	var state = this._computeDragState();
-// }
-//
-// MM.Mouse._finishDragDrop = function(state) {
-// 	this._visualizeDragState(null);
-//
-// 	var target = state.item;
-// 	switch (state.result) {
-// 		case "append":
-// 			var action = new MM.Action.MoveItem(this._item, target);
-// 		break;
-//
-// 		case "sibling":
-// 			var index = target.getParent().getChildren().indexOf(target);
-// 			var targetIndex = index + (state.direction == "right" || state.direction == "bottom" ? 1 : 0);
-// 			var action = new MM.Action.MoveItem(this._item, target.getParent(), targetIndex, target.getSide());
-// 		break;
-//
-// 		default:
-// 			return;
-// 		break;
-// 	}
-//
-// 	MM.App.action(action);
-// }
-//
-// /**
-//  * Compute a state object for a drag: current result (""/"append"/"sibling"), parent/sibling, direction
-//  */
-// MM.Mouse._computeDragState = function() {
-// 	var rect = this._ghost.getBoundingClientRect();
-// 	var closest = MM.App.map.getClosestItem(rect.left + rect.width/2, rect.top + rect.height/2);
-// 	var target = closest.item;
-//
-// 	var state = {
-// 		result: "",
-// 		item: target,
-// 		direction: ""
-// 	}
-//
-// 	var tmp = target;
-// 	while (!tmp.isRoot()) {
-// 		if (tmp == this._item) { return state; } /* drop on a child or self */
-// 		tmp = tmp.getParent();
-// 	}
-//
-// 	var w1 = this._item.getDOM().content.offsetWidth;
-// 	var w2 = target.getDOM().content.offsetWidth;
-// 	var w = Math.max(w1, w2);
-// 	var h1 = this._item.getDOM().content.offsetHeight;
-// 	var h2 = target.getDOM().content.offsetHeight;
-// 	var h = Math.max(h1, h2);
-//
-// 	if (target.isRoot()) { /* append here */
-// 		state.result = "append";
-// 	} else if (Math.abs(closest.dx) < w && Math.abs(closest.dy) < h) { /* append here */
-// 		state.result = "append";
-// 	} else {
-// 		state.result = "sibling";
-// 		var childDirection = target.getParent().getLayout().getChildDirection(target);
-// 		var diff = -1 * (childDirection == "top" || childDirection == "bottom" ? closest.dx : closest.dy);
-//
-// 		if (childDirection == "left" || childDirection == "right") {
-// 			state.direction = (closest.dy < 0 ? "bottom" : "top");
-// 		} else {
-// 			state.direction = (closest.dx < 0 ? "right" : "left");
-// 		}
-// 	}
-//
-// 	return state;
-// }
-//
-// MM.Mouse._visualizeDragState = function(state) {
-// 	if (this._oldState && state && this._oldState.item == state.item && this._oldState.result == state.result) { return; } /* nothing changed */
-//
-// 	if (this._oldDragState) { /* remove old vis */
-// 		var item = this._oldDragState.item;
-// 		var node = item.getDOM().content;
-// 		node.style.boxShadow = "";
-// 	}
-//
-// 	this._oldDragState = state;
-//
-// 	if (state) { /* show new vis */
-// 		var item = state.item;
-// 		var node = item.getDOM().content;
-//
-// 		var x = 0;
-// 		var y = 0;
-// 		var offset = 5;
-// 		if (state.result == "sibling") {
-// 			if (state.direction == "left") { x = -1; }
-// 			if (state.direction == "right") { x = +1; }
-// 			if (state.direction == "top") { y = -1; }
-// 			if (state.direction == "bottom") { y = +1; }
-// 		}
-// 		var spread = (x || y ? -2 : 2);
-// 		node.style.boxShadow = (x*offset) + "px " + (y*offset) + "px 2px " + spread + "px #000";
-// 	}
-// }
+MM.Mouse = {
+  TOUCH_DELAY: 500,
+  _port: null,
+  _cursor: [0, 0],
+  _pos: [0, 0], /* ghost pos */
+  _mode: "",
+  _item: null,
+  _ghost: null,
+  _oldDragState: null,
+  _touchTimeout: null,
+  _data_dblclick: 0,
+  _processDragNode2: false
+}
+
+MM.Mouse.init = function(port) {
+  this._mindmapNodePort = port;
+  this._mindmapNodePort.addEventListener("touchstart", this);
+  this._mindmapNodePort.addEventListener("mousedown", this);
+  // this._mindmapNodePort.addEventListener("click", this);
+  // this._mindmapNodePort.addEventListener("dblclick", this);
+  this._mindmapNodePort.addEventListener("wheel", this);
+  this._mindmapNodePort.addEventListener("mousewheel", this);
+  this._mindmapNodePort.addEventListener("contextmenu", this);
+}
+
+MM.Mouse.handleEvent = function(e) {
+  switch (e.type) {
+    // case "click":
+    //   console.log("click MM.Mouse")
+    //   // When not dragging a node
+    //   if (this._processDragNode2 == false) {
+    //     // Wait 300ms for potential double click
+    //     setTimeout(function () {
+    //       // If it's a double click
+    //       if (this._data_dblclick == 1) {
+    //         // Doing nothing
+    //       // If it's a single click
+    //       } else {
+    //         // Triggers selectNode event
+    //         var item = MM.App.map.getItemFor(e.target);
+    //         if (MM.App.editing && item == MM.App.current) { return; } /* ignore on edited node */
+    //         if (item) {
+    //           MM.App.select(item);
+    //           MM.App.map.selectNode(item);
+    //         }
+    //       }
+    //     }, 300);
+    //   // When dragging a node
+    //   } else {
+    //     this._processDragNode2 = false;
+    //   }
+    // break;
+    //
+    // case "dblclick":
+    //   console.log("dblclick MM.Mouse")
+    //   var item = MM.App.map.getItemFor(e.target);
+    //   if (item) { MM.CoMMand.Edit.execute(); }
+    //   this._data_dblclick = 1
+    // break;
+
+    case "contextmenu":
+      this._endDrag();
+      e.preventDefault();
+
+      var item = MM.App.map.getItemFor(e.target);
+      item && MM.App.select(item);
+
+      MM.Menu.open(e.clientX, e.clientY);
+    break;
+
+    case "touchstart":
+      if (e.touches.length > 1) { return; }
+      e.clientX = e.touches[0].clientX;
+      e.clientY = e.touches[0].clientY;
+    case "mousedown":
+      var item = MM.App.map.getItemFor(e.target);
+      if (MM.App.editing) {
+        if (item == MM.App.current) { return; } /* ignore dnd on edited node */
+        MM.CoMMand.Finish.execute(); /* clicked elsewhere => finalize edit */
+      }
+
+      if (e.type == "mousedown") { e.preventDefault(); } /* to prevent blurring the clipboard node */
+
+      if (e.type == "touchstart") { /* context menu here, after we have the item */
+        this._touchTimeout = setTimeout(function() {
+          item && MM.App.select(item);
+          MM.Menu.open(e.clientX, e.clientY);
+        }, this.TOUCH_DELAY);
+      }
+
+      this._startDrag(e, item);
+    break;
+
+    case "touchmove":
+      if (e.touches.length > 1) { return; }
+      e.clientX = e.touches[0].clientX;
+      e.clientY = e.touches[0].clientY;
+      clearTimeout(this._touchTimeout);
+    case "mousemove":
+      this._processDragNode2 = true
+      this._processDrag(e);
+    break;
+
+    case "touchend":
+      clearTimeout(this._touchTimeout);
+    case "mouseup":
+      this._endDrag();
+    break;
+
+    case "wheel":
+    case "mousewheel":
+      var dir = 0;
+      if (e.wheelDelta) {
+        if (e.wheelDelta < 0) {
+          dir = -1;
+        } else if (e.wheelDelta > 0) {
+          dir = 1;
+        }
+      }
+      if (e.deltaY) {
+        if (e.deltaY > 0) {
+          dir = -1;
+        } else if (e.deltaY < 0) {
+          dir = 1;
+        }
+      }
+      if (dir) {
+        MM.App.adjustFontSize(dir);
+      }
+    break;
+  }
+}
+
+MM.Mouse._startDrag = function(e, item) {
+
+  if (e.type == "mousedown") {
+    e.preventDefault(); /* no selections allowed. only for mouse; preventing touchstart would prevent Safari from emulating clicks */
+    this._mindmapNodePort.addEventListener("mousemove", this);
+    this._mindmapNodePort.addEventListener("mouseup", this);
+  } else {
+    this._mindmapNodePort.addEventListener("touchmove", this);
+    this._mindmapNodePort.addEventListener("touchend", this);
+  }
+
+  this._cursor[0] = e.clientX;
+  this._cursor[1] = e.clientY;
+
+  if (item && !item.isRoot()) {
+    this._mode = "drag";
+    this._item = item;
+  } else {
+    this._mode = "pan";
+    this._mindmapNodePort.style.cursor = "move";
+  }
+}
+
+MM.Mouse._processDrag = function(e) {
+  e.preventDefault();
+  var dx = e.clientX - this._cursor[0];
+  var dy = e.clientY - this._cursor[1];
+  this._cursor[0] = e.clientX;
+  this._cursor[1] = e.clientY;
+
+  switch (this._mode) {
+    case "drag":
+      if (!this._ghost) {
+        this._mindmapNodePort.style.cursor = "move";
+        this._buildGhost(dx, dy);
+      }
+      this._moveGhost(dx, dy);
+      var state = this._computeDragState();
+      this._visualizeDragState(state);
+    break;
+
+    case "pan":
+      MM.App.map.moveBy(dx, dy);
+    break;
+  }
+}
+
+MM.Mouse._endDrag = function() {
+  this._mindmapNodePort.style.cursor = "";
+  this._mindmapNodePort.removeEventListener("mousemove", this);
+  this._mindmapNodePort.removeEventListener("mouseup", this);
+
+  if (this._mode == "pan") { return; } /* no cleanup after panning */
+
+  if (this._ghost) {
+    var state = this._computeDragState();
+    this._finishDragDrop(state);
+
+    this._ghost.parentNode.removeChild(this._ghost);
+    this._ghost = null;
+  }
+
+  this._item = null;
+}
+
+MM.Mouse._buildGhost = function() {
+  var content = this._item.getDOM().content;
+  this._ghost = content.cloneNode(true);
+  this._ghost.classList.add("ghost");
+  this._pos[0] = content.offsetLeft;
+  this._pos[1] = content.offsetTop;
+  content.parentNode.appendChild(this._ghost);
+}
+
+MM.Mouse._moveGhost = function(dx, dy) {
+  this._pos[0] += dx;
+  this._pos[1] += dy;
+  this._ghost.style.left = this._pos[0] + "px";
+  this._ghost.style.top = this._pos[1] + "px";
+
+  var state = this._computeDragState();
+}
+
+MM.Mouse._finishDragDrop = function(state) {
+  this._visualizeDragState(null);
+
+  var target = state.item;
+  switch (state.result) {
+    case "append":
+      var action = new MM.Action.MoveItem(this._item, target);
+    break;
+
+    case "sibling":
+      var index = target.getParent().getChildren().indexOf(target);
+      var targetIndex = index + (state.direction == "right" || state.direction == "bottom" ? 1 : 0);
+      var action = new MM.Action.MoveItem(this._item, target.getParent(), targetIndex, target.getSide());
+    break;
+
+    default:
+      return;
+    break;
+  }
+
+  MM.App.action(action);
+}
+
+/**
+ * Compute a state object for a drag: current result (""/"append"/"sibling"), parent/sibling, direction
+ */
+MM.Mouse._computeDragState = function() {
+  var rect = this._ghost.getBoundingClientRect();
+  var closest = MM.App.map.getClosestItem(rect.left + rect.width/2, rect.top + rect.height/2);
+  var target = closest.item;
+
+  var state = {
+    result: "",
+    item: target,
+    direction: ""
+  }
+
+  var tmp = target;
+  while (!tmp.isRoot()) {
+    if (tmp == this._item) { return state; } /* drop on a child or self */
+    tmp = tmp.getParent();
+  }
+
+  var w1 = this._item.getDOM().content.offsetWidth;
+  var w2 = target.getDOM().content.offsetWidth;
+  var w = Math.max(w1, w2);
+  var h1 = this._item.getDOM().content.offsetHeight;
+  var h2 = target.getDOM().content.offsetHeight;
+  var h = Math.max(h1, h2);
+
+  if (target.isRoot()) { /* append here */
+    state.result = "append";
+  } else if (Math.abs(closest.dx) < w && Math.abs(closest.dy) < h) { /* append here */
+    state.result = "append";
+  } else {
+    state.result = "sibling";
+    var childDirection = target.getParent().getLayout().getChildDirection(target);
+    var diff = -1 * (childDirection == "top" || childDirection == "bottom" ? closest.dx : closest.dy);
+
+    if (childDirection == "left" || childDirection == "right") {
+      state.direction = (closest.dy < 0 ? "bottom" : "top");
+    } else {
+      state.direction = (closest.dx < 0 ? "right" : "left");
+    }
+  }
+
+  return state;
+}
+
+MM.Mouse._visualizeDragState = function(state) {
+  if (this._oldState && state && this._oldState.item == state.item && this._oldState.result == state.result) { return; } /* nothing changed */
+
+  if (this._oldDragState) { /* remove old vis */
+    var item = this._oldDragState.item;
+    var node = item.getDOM().content;
+    node.style.boxShadow = "";
+  }
+
+  this._oldDragState = state;
+
+  if (state) { /* show new vis */
+    var item = state.item;
+    var node = item.getDOM().content;
+
+    var x = 0;
+    var y = 0;
+    var offset = 5;
+    if (state.result == "sibling") {
+      if (state.direction == "left") { x = -1; }
+      if (state.direction == "right") { x = +1; }
+      if (state.direction == "top") { y = -1; }
+      if (state.direction == "bottom") { y = +1; }
+    }
+    var spread = (x || y ? -2 : 2);
+    node.style.boxShadow = (x*offset) + "px " + (y*offset) + "px 2px " + spread + "px #000";
+  }
+}
 /*
 setInterval(function() {
   console.log(document.activeElement);
@@ -5212,7 +5283,7 @@ setInterval(function() {
  * Notes regarding app state/modes, activeElements, focusing etc.
  * ==============================================================
  *
- * 1) There is always exactly one item selected. All executed commands
+ * 1) There is always exactly one item selected. All executed coMMands
  *    operate on this item.
  *
  * 2) The app distinguishes three modes with respect to focus:
@@ -5228,12 +5299,12 @@ setInterval(function() {
  * 3) Editing mode (2b) can be ended by multiple ways:
  *   3a) By calling current.stopEditing();
  *       this shall be followed by some resolution.
- *   3b) By executing MM.Command.{Finish,Cancel};
+ *   3b) By executing MM.CoMMand.{Finish,Cancel};
  *       these call 3a internally.
  *   3c) By blurring the item itself (by selecting another);
- *       this calls MM.Command.Finish (3b).
+ *       this calls MM.CoMMand.Finish (3b).
  *   3b) By blurring the currentElement;
- *       this calls MM.Command.Finish (3b).
+ *       this calls MM.CoMMand.Finish (3b).
  *
  */
 MM.App = {
@@ -5275,7 +5346,7 @@ MM.App = {
     this.historyIndex = 0;
 
     this.map = map;
-    this.map.show(this._port);
+    this.map.show(this._mindmapNodePort);
   },
 
   select: function(item) {
@@ -5286,7 +5357,7 @@ MM.App = {
 
   adjustFontSize: function(diff) {
     this._fontSize = Math.max(30, this._fontSize + 10*diff);
-    this._port.style.fontSize = this._fontSize + "%";
+    this._mindmapNodePort.style.fontSize = this._fontSize + "%";
     this.map.update();
     this.map.ensureItemVisibility(this.current);
   },
@@ -5321,24 +5392,32 @@ MM.App = {
   setThrobber: function(visible) {
     this._throbber.classList[visible ? "add" : "remove"]("visible");
   },
-    
+
+  desactivateMindMapKeyBoard: function() {
+    MM.Keyboard.init(true);
+  },
+
+  activateMindMapKeyBoard: function() {
+    MM.Keyboard.init();
+  },
+
   setRootNodeText: function(text) {
     var item = MM.App.current;
     while (!item.isRoot()) { item = item.getParent(); }
     item.setText(text);
   },
 
-  init: function() {
-    this._port = document.querySelector("#port_node");
-    this._throbber = document.querySelector("#throbber");
+  init: function(rootNodeName="root", port="#port_node", throbber="#throbber") {
+    this._mindmapNodePort = document.querySelector(port);
+    this._throbber = document.querySelector(throbber);
     this.ui = new MM.UI();
     this.io = new MM.UI.IO();
-//   		this.help = new MM.UI.Help();
+    // this.help = new MM.UI.Help();
 
     MM.Tip.init();
     // MM.Keyboard.init();
-    // MM.Menu.init(this._port);
-    // MM.Mouse.init(this._port);
+    // MM.Menu.init(this._mindmapNodePort);
+    MM.Mouse.init(this._mindmapNodePort);
     // MM.Clipboard.init();
 
     window.addEventListener("resize", this);
@@ -5347,13 +5426,19 @@ MM.App = {
     MM.subscribe("item-change", this);
 
     this._syncPort();
-    this.setMap(new MM.Map());
+    this.setMap(new MM.Map(rootNodeName));
+  },
+
+  selectRootNode: function() {
+    var item = MM.App.current;
+    while (!item.isRoot()) { item = item.getParent(); }
+    MM.App.select(item);
   },
 
   _syncPort: function() {
     this.portSize = [window.innerWidth - this.ui.getWidth(), window.innerHeight];
-    this._port.style.width = this.portSize[0] + "px";
-    this._port.style.height = this.portSize[1] + "px";
+    this._mindmapNodePort.style.width = this.portSize[0] + "px";
+    this._mindmapNodePort.style.height = this.portSize[1] + "px";
     this._throbber.style.right = (20 + this.ui.getWidth())+ "px";
     if (this.map) { this.map.ensureItemVisibility(this.current); }
   }
