@@ -1066,9 +1066,8 @@ MM.Map.prototype.hide = function() {
 MM.Map.prototype.center = function() {
   var node = this._root.getDOM().node;
   var port = MM.App.portSize;
-  var left = ((port[0] - node.offsetWidth)/2) - 200;
-  var top = (port[1] - node.offsetHeight)/2;
-
+  var left = ((port[0] - node.offsetWidth)/2) - 300;
+  var top = (port[1] - node.offsetHeight)/2 - 100;
   this._moveTo(Math.round(left), Math.round(top));
 
   return this;
