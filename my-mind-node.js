@@ -664,7 +664,7 @@ MM.Item.prototype.getOwnColor = function() {
 }
 
 MM.Item.prototype.getLayout = function() {
-  return this._layout || this._parent.getLayout();
+  return MM.Layout.getById('map');
 }
 
 // MM.Item.prototype.getOwnLayout = function() {
