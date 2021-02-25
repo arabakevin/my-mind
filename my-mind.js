@@ -1676,62 +1676,62 @@ MM.Clipboard._endCut = function() {
   this._item = null;
   this._mode = "";
 }
-MM.Menu = {
-  _dom: {},
-  _port: null,
+// MM.Menu = {
+//   _dom: {},
+//   _port: null,
 
-  open: function(x, y) {
-    this._dom.node.style.display = "";
-    var w = this._dom.node.offsetWidth;
-    var h = this._dom.node.offsetHeight;
+//   open: function(x, y) {
+//     this._dom.node.style.display = "";
+//     var w = this._dom.node.offsetWidth;
+//     var h = this._dom.node.offsetHeight;
 
-    var left = x;
-    var top = y;
+//     var left = x;
+//     var top = y;
 
-    if (left > this._port.offsetWidth / 2) { left -= w; }
-    if (top > this._port.offsetHeight / 2) { top -= h; }
+//     if (left > this._port.offsetWidth / 2) { left -= w; }
+//     if (top > this._port.offsetHeight / 2) { top -= h; }
 
-    this._dom.node.style.left = left+"px";
-    this._dom.node.style.top = top+"px";
-  },
+//     this._dom.node.style.left = left+"px";
+//     this._dom.node.style.top = top+"px";
+//   },
 
-  close: function() {
-    this._dom.node.style.display = "none";
-  },
+//   close: function() {
+//     this._dom.node.style.display = "none";
+//   },
 
-  handleEvent: function(e) {
-    if (e.currentTarget != this._dom.node) {
-      this.close();
-      return;
-    }
+//   handleEvent: function(e) {
+//     if (e.currentTarget != this._dom.node) {
+//       this.close();
+//       return;
+//     }
 
-    e.stopPropagation(); /* no dragdrop, no blur of activeElement */
-    e.preventDefault(); /* we do not want to focus the button */
+//     e.stopPropagation(); /* no dragdrop, no blur of activeElement */
+//     e.preventDefault(); /* we do not want to focus the button */
 
-    var command = e.target.getAttribute("data-command");
-    if (!command) { return; }
+//     var command = e.target.getAttribute("data-command");
+//     if (!command) { return; }
 
-    command = MM.Command[command];
-    if (!command.isValid()) { return; }
+//     command = MM.Command[command];
+//     if (!command.isValid()) { return; }
 
-    command.execute();
-    this.close();
-  },
+//     command.execute();
+//     this.close();
+//   },
 
-  init: function(port) {
-    this._port = port;
-    this._dom.node = document.querySelector("#menu");
-    var buttons = this._dom.node.querySelectorAll("[data-command]");
-    [].slice.call(buttons).forEach(function(button) {
-      button.innerHTML = MM.Command[button.getAttribute("data-command")].label;
-    });
+//   init: function(port) {
+//     this._port = port;
+//     this._dom.node = document.querySelector("#menu");
+//     var buttons = this._dom.node.querySelectorAll("[data-command]");
+//     [].slice.call(buttons).forEach(function(button) {
+//       button.innerHTML = MM.Command[button.getAttribute("data-command")].label;
+//     });
 
-    this._port.addEventListener("mousedown", this);
-    this._dom.node.addEventListener("mousedown", this);
+//     this._port.addEventListener("mousedown", this);
+//     this._dom.node.addEventListener("mousedown", this);
 
-    this.close();
-  }
-}
+//     this.close();
+//   }
+// }
 
 MM.Command = Object.create(MM.Repo, {
   keys: {value: []},
@@ -1757,17 +1757,17 @@ MM.Command.Undo.execute = function() {
   MM.App.historyIndex--;
 }
 
-MM.Command.Redo = Object.create(MM.Command, {
-  label: {value: "Redo"},
-  keys: {value: [{keyCode: "Y".charCodeAt(0), ctrlKey: true}]},
-});
-MM.Command.Redo.isValid = function() {
-  return (MM.Command.isValid.call(this) && MM.App.historyIndex != MM.App.history.length);
-}
-MM.Command.Redo.execute = function() {
-  MM.App.history[MM.App.historyIndex].perform();
-  MM.App.historyIndex++;
-}
+// MM.Command.Redo = Object.create(MM.Command, {
+//   label: {value: "Redo"},
+//   keys: {value: [{keyCode: "Y".charCodeAt(0), ctrlKey: true}]},
+// });
+// MM.Command.Redo.isValid = function() {
+//   return (MM.Command.isValid.call(this) && MM.App.historyIndex != MM.App.history.length);
+// }
+// MM.Command.Redo.execute = function() {
+//   MM.App.history[MM.App.historyIndex].perform();
+//   MM.App.historyIndex++;
+// }
 
 MM.Command.InsertSibling = Object.create(MM.Command, {
   label: {value: "Insert a sibling"},
@@ -1808,7 +1808,10 @@ MM.Command.InsertChild.execute = function() {
 
 MM.Command.Delete = Object.create(MM.Command, {
   label: {value: "Delete an item"},
-  keys: {value: [{keyCode: 46}]}
+  keys: {value: [
+    {keyCode: 8, ctrlKey:false},
+    {keyCode: 46}
+  ]}
 });
 MM.Command.Delete.isValid = function() {
   return MM.Command.isValid.call(this) && !MM.App.current.isRoot();
@@ -1876,7 +1879,10 @@ MM.Command.Delete.execute = function() {
 
 MM.Command.Center = Object.create(MM.Command, {
   label: {value: "Center map"},
-  keys: {value: [{keyCode: 35}]}
+  keys: {value: [
+    {keyCode: 91},
+    {keyCode: 93}
+  ]}
 });
 MM.Command.Center.execute = function() {
   MM.App.map.center();
@@ -1977,7 +1983,21 @@ MM.Command.ZoomOut.execute = function() {
 // 		}
 // 	}
 // }
-
+	
+MM.Command.ShortCuts = Object.create(MM.Command, {
+  label: {value: "toggle ShortCuts keyboard"},
+  keys: {value: [
+    {keyCode: 112}
+  ]}
+});
+MM.Command.ShortCuts.execute = function() {
+  let tipElement = document.getElementById('tip');
+  if (tipElement.classList.value === 'hidden') {
+    tipElement.classList.remove("hidden");
+  } else {
+    tipElement.classList.add("hidden");
+  }
+}
 // MM.Command.Copy = Object.create(MM.Command, {
 //   label: {value: "Copy"},
 //   prevent: {value: false},
@@ -2014,15 +2034,15 @@ MM.Command.ZoomOut.execute = function() {
 //   MM.Clipboard.paste(MM.App.current);
 // }
 
-MM.Command.Fold = Object.create(MM.Command, {
-  label: {value: "Fold/Unfold"},
-  keys:  {value: [{keyCode: 112}]}
-});
-MM.Command.Fold.execute = function() {
-  var item = MM.App.current;
-  if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
-  MM.App.map.ensureItemVisibility(item);
-}
+// MM.Command.Fold = Object.create(MM.Command, {
+//   label: {value: "Fold/Unfold"},
+//   keys:  {value: [{keyCode: 112}]}
+// });
+// MM.Command.Fold.execute = function() {
+//   var item = MM.App.current;
+//   if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
+//   MM.App.map.ensureItemVisibility(item);
+// }
 MM.Command.Edit = Object.create(MM.Command, {
   label: {value: "Edit item"},
   keys: {value: [
@@ -2123,27 +2143,27 @@ MM.Command.Style.execute = function() {
 //   keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true}]}
 // });
 
-MM.Command.Value = Object.create(MM.Command, {
-  label: {value: "Set status"},
-  keys: {value: [
-    {keyCode: 113, ctrlKey:true}
-  ]}
-});
+// MM.Command.Value = Object.create(MM.Command, {
+//   label: {value: "Set status"},
+//   keys: {value: [
+//     {keyCode: 113, ctrlKey:true}
+//   ]}
+// });
 
-MM.Command.Value.execute = function() {
-  var item = MM.App.current;
-  var oldValue = item.getValue();
-  var status = prompt("Set item status", oldValue);
-  if (status == null) { return; }
+// MM.Command.Value.execute = function() {
+//   var item = MM.App.current;
+//   var oldValue = item.getValue();
+//   var status = prompt("Set item status", oldValue);
+//   if (status == null) { return; }
 
-  if (!status.length) { newValue = null; }
-  //
-  // var numValue = parseFloat(newValue);
-  // var action = new MM.Action.SetValue(item, isNaN(numValue) ? newValue : numValue);
-  // MM.App.action(action);
-  var action = new MM.Action.SetStatus(item, status);
-  MM.App.action(action);
-}
+//   if (!status.length) { newValue = null; }
+//   //
+//   // var numValue = parseFloat(newValue);
+//   // var action = new MM.Action.SetValue(item, isNaN(numValue) ? newValue : numValue);
+//   // MM.App.action(action);
+//   var action = new MM.Action.SetStatus(item, status);
+//   MM.App.action(action);
+// }
 
 // MM.Command.Yes = Object.create(MM.Command, {
 //   label: {value: "Yes"},
@@ -5025,7 +5045,7 @@ MM.Mouse.handleEvent = function(e) {
       var item = MM.App.map.getItemFor(e.target);
       item && MM.App.select(item);
 
-      MM.Menu.open(e.clientX, e.clientY);
+//       MM.Menu.open(e.clientX, e.clientY);
     break;
 
     case "touchstart":
@@ -5044,7 +5064,7 @@ MM.Mouse.handleEvent = function(e) {
       if (e.type == "touchstart") { /* context menu here, after we have the item */
         this._touchTimeout = setTimeout(function() {
           item && MM.App.select(item);
-          MM.Menu.open(e.clientX, e.clientY);
+//           MM.Menu.open(e.clientX, e.clientY);
         }, this.TOUCH_DELAY);
       }
 
@@ -5414,7 +5434,7 @@ MM.App = {
 
     MM.Tip.init();
     MM.Keyboard.init();
-    MM.Menu.init(this._port);
+//     MM.Menu.init(this._port);
     MM.Mouse.init(this._port);
     MM.Clipboard.init();
 
