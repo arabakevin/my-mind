@@ -5020,10 +5020,10 @@ MM.Mouse.handleEvent = function(e) {
             // Triggers selectNode event
             var item = MM.App.map.getItemFor(e.target);
             if (MM.App.editing && item == MM.App.current) { return; } /* ignore on edited node */
-            if (item) {
-              MM.App.select(item);
+            if (item && item == MM.App.current) {
               MM.App.map.selectNode(item);
             }
+            MM.App.select(item);
           }
         }, 300);
       // When dragging a node
