@@ -812,8 +812,8 @@ MM.Item.prototype.handleEvent = function(e) {
     break;
 
     case "click":
-      if (this._collapsed) { this.expand(); } else { this.collapse(); }
       MM.App.select(this, "node");
+      if (this._collapsed) { this.expand(); } else { this.collapse(); }
     break;
   }
 }
@@ -5025,7 +5025,7 @@ MM.Mouse.handleEvent = function(e) {
             }
             MM.App.select(item);
           }
-        }, 300);
+        }, 150);
       // When dragging a node
       } else {
         this._processDragNode = false;
@@ -5368,9 +5368,11 @@ MM.App = {
   },
 
   select: function(item) {
-    if (this.current && this.current != item) { this.current.deselect(); }
-    this.current = item;
-    this.current.select();
+    if (item) {
+      if (this.current && this.current != item) { this.current.deselect(); }
+      this.current = item;
+      this.current.select();
+    }
   },
 
   adjustFontSize: function(diff) {
