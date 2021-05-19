@@ -55,7 +55,7 @@ exports.MM = MM;
 
 /*
   Any copyright is dedicated to the Public Domain.
-  http://creativecoMMons.org/publicdomain/zero/1.0/
+  http://creativecommons.org/publicdomain/zero/1.0/
 */
 
 /**
@@ -525,7 +525,7 @@ MM.Item.prototype.select = function() {
 
 MM.Item.prototype.deselect = function() {
   /* we were in 2b; finish that via 3b */
-  if (MM.App.editing) { MM.CoMMand.Finish.execute(); }
+  if (MM.App.editing) { MM.coMMand.Finish.execute(); }
   this._dom.node.classList.remove("current");
 }
 
@@ -770,7 +770,7 @@ MM.Item.prototype.startEditing = function() {
   this._oldText = this.getText();
   this._dom.text.contentEditable = true;
   this._dom.text.focus(); /* switch to 2b */
-  document.execCommand("styleWithCSS", null, false);
+  document.execcoMMand("styleWithCSS", null, false);
 
   this._dom.text.addEventListener("input", this);
   this._dom.text.addEventListener("keydown", this);
@@ -808,12 +808,12 @@ MM.Item.prototype.handleEvent = function(e) {
     break;
 
     case "blur": /* 3d */
-      MM.CoMMand.Finish.execute();
+      MM.coMMand.Finish.execute();
     break;
 
     case "click":
-      if (this._collapsed) { this.expand(); } else { this.collapse(); }
       MM.App.select(this, "node");
+      if (this._collapsed) { this.expand(); } else { this.collapse(); }
     break;
   }
 }
@@ -1066,9 +1066,10 @@ MM.Map.prototype.hide = function() {
 MM.Map.prototype.center = function() {
   var node = this._root.getDOM().node;
   var port = MM.App.portSize;
-  var left = ((port[0] - node.offsetWidth)/2);
+  var left = (port[0] - node.offsetWidth)/2;
   var top = (port[1] - node.offsetHeight)/2;
-  this._moveTo(Math.round(300), Math.round(150));
+
+  this._moveTo(Math.round(left), Math.round(top));
 
   return this;
 }
@@ -1272,7 +1273,7 @@ MM.Keyboard.handleEvent = function(e) {
   }
 
   if (MM.disableKeyboardShortcuts == false){
-  var coMMands = MM.CoMMand.getAll();
+  var coMMands = MM.coMMand.getAll();
     for (var i=0;i<coMMands.length;i++) {
       var coMMand = coMMands[i];
       if (!coMMand.isValid()) { continue; }
@@ -1675,156 +1676,159 @@ MM.Clipboard._endCut = function() {
   this._item = null;
   this._mode = "";
 }
-MM.Menu = {
-  _dom: {},
-  _port: null,
+// MM.Menu = {
+//   _dom: {},
+//   _port: null,
 
-  open: function(x, y) {
-    this._dom.node.style.display = "";
-    var w = this._dom.node.offsetWidth;
-    var h = this._dom.node.offsetHeight;
+//   open: function(x, y) {
+//     this._dom.node.style.display = "";
+//     var w = this._dom.node.offsetWidth;
+//     var h = this._dom.node.offsetHeight;
 
-    var left = x;
-    var top = y;
+//     var left = x;
+//     var top = y;
 
-    if (left > this._mindmapNodePort.offsetWidth / 2) { left -= w; }
-    if (top > this._mindmapNodePort.offsetHeight / 2) { top -= h; }
+//     if (left > this._port.offsetWidth / 2) { left -= w; }
+//     if (top > this._port.offsetHeight / 2) { top -= h; }
 
-    this._dom.node.style.left = left+"px";
-    this._dom.node.style.top = top+"px";
-  },
+//     this._dom.node.style.left = left+"px";
+//     this._dom.node.style.top = top+"px";
+//   },
 
-  close: function() {
-    this._dom.node.style.display = "none";
-  },
+//   close: function() {
+//     this._dom.node.style.display = "none";
+//   },
 
-  handleEvent: function(e) {
-    if (e.currentTarget != this._dom.node) {
-      this.close();
-      return;
-    }
+//   handleEvent: function(e) {
+//     if (e.currentTarget != this._dom.node) {
+//       this.close();
+//       return;
+//     }
 
-    e.stopPropagation(); /* no dragdrop, no blur of activeElement */
-    e.preventDefault(); /* we do not want to focus the button */
+//     e.stopPropagation(); /* no dragdrop, no blur of activeElement */
+//     e.preventDefault(); /* we do not want to focus the button */
 
-    var coMMand = e.target.getAttribute("data-coMMand");
-    if (!coMMand) { return; }
+//     var coMMand = e.target.getAttribute("data-coMMand");
+//     if (!coMMand) { return; }
 
-    coMMand = MM.CoMMand[coMMand];
-    if (!coMMand.isValid()) { return; }
+//     coMMand = MM.coMMand[coMMand];
+//     if (!coMMand.isValid()) { return; }
 
-    coMMand.execute();
-    this.close();
-  },
+//     coMMand.execute();
+//     this.close();
+//   },
 
-  init: function(port) {
-    this._mindmapNodePort = port;
-    this._dom.node = document.querySelector("#menu");
-    var buttons = this._dom.node.querySelectorAll("[data-coMMand]");
-    [].slice.call(buttons).forEach(function(button) {
-      button.innerHTML = MM.CoMMand[button.getAttribute("data-coMMand")].label;
-    });
+//   init: function(port) {
+//     this._port = port;
+//     this._dom.node = document.querySelector("#menu");
+//     var buttons = this._dom.node.querySelectorAll("[data-coMMand]");
+//     [].slice.call(buttons).forEach(function(button) {
+//       button.innerHTML = MM.coMMand[button.getAttribute("data-coMMand")].label;
+//     });
 
-    this._mindmapNodePort.addEventListener("mousedown", this);
-    this._dom.node.addEventListener("mousedown", this);
+//     this._port.addEventListener("mousedown", this);
+//     this._dom.node.addEventListener("mousedown", this);
 
-    this.close();
-  }
-}
+//     this.close();
+//   }
+// }
 
-MM.CoMMand = Object.create(MM.Repo, {
+MM.coMMand = Object.create(MM.Repo, {
   keys: {value: []},
   editMode: {value: false},
   prevent: {value: true}, /* prevent default keyboard action? */
   label: {value: ""}
 });
 
-MM.CoMMand.isValid = function() {
+MM.coMMand.isValid = function() {
   return (this.editMode === null || this.editMode == MM.App.editing);
 }
-MM.CoMMand.execute = function() {}
+MM.coMMand.execute = function() {}
 
-MM.CoMMand.Undo = Object.create(MM.CoMMand, {
+MM.coMMand.Undo = Object.create(MM.coMMand, {
   label: {value: "Undo"},
   keys: {value: [{keyCode: "Z".charCodeAt(0), ctrlKey: true}]}
 });
-MM.CoMMand.Undo.isValid = function() {
-  return MM.CoMMand.isValid.call(this) && !!MM.App.historyIndex;
+MM.coMMand.Undo.isValid = function() {
+  return MM.coMMand.isValid.call(this) && !!MM.App.historyIndex;
 }
-MM.CoMMand.Undo.execute = function() {
+MM.coMMand.Undo.execute = function() {
   MM.App.history[MM.App.historyIndex-1].undo();
   MM.App.historyIndex--;
 }
 
-MM.CoMMand.Redo = Object.create(MM.CoMMand, {
-  label: {value: "Redo"},
-  keys: {value: [{keyCode: "Y".charCodeAt(0), ctrlKey: true}]},
-});
-MM.CoMMand.Redo.isValid = function() {
-  return (MM.CoMMand.isValid.call(this) && MM.App.historyIndex != MM.App.history.length);
-}
-MM.CoMMand.Redo.execute = function() {
-  MM.App.history[MM.App.historyIndex].perform();
-  MM.App.historyIndex++;
-}
+// MM.coMMand.Redo = Object.create(MM.coMMand, {
+//   label: {value: "Redo"},
+//   keys: {value: [{keyCode: "Y".charCodeAt(0), ctrlKey: true}]},
+// });
+// MM.coMMand.Redo.isValid = function() {
+//   return (MM.coMMand.isValid.call(this) && MM.App.historyIndex != MM.App.history.length);
+// }
+// MM.coMMand.Redo.execute = function() {
+//   MM.App.history[MM.App.historyIndex].perform();
+//   MM.App.historyIndex++;
+// }
 
-MM.CoMMand.InsertSibling = Object.create(MM.CoMMand, {
-  label: {value: "Insert a sibling"},
-  keys: {value: [{keyCode: 13}]}
-});
-MM.CoMMand.InsertSibling.execute = function() {
-  var item = MM.App.current;
-  if (item.isRoot()) {
-    var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
-  } else {
-    var parent = item.getParent();
-    var index = parent.getChildren().indexOf(item);
-    var action = new MM.Action.InsertNewItem(parent, index+1);
-  }
-  MM.App.action(action);
+// MM.coMMand.InsertSibling = Object.create(MM.coMMand, {
+//   label: {value: "Insert a sibling"},
+//   keys: {value: [{keyCode: 13}]}
+// });
+// MM.coMMand.InsertSibling.execute = function() {
+//   var item = MM.App.current;
+//   if (item.isRoot()) {
+//     var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
+//   } else {
+//     var parent = item.getParent();
+//     var index = parent.getChildren().indexOf(item);
+//     var action = new MM.Action.InsertNewItem(parent, index+1);
+//   }
+//   MM.App.action(action);
+//
+//   MM.coMMand.Edit.execute();
+//
+//   MM.publish("coMMand-sibling");
+// }
+//
+// MM.coMMand.InsertChild = Object.create(MM.coMMand, {
+//   label: {value: "Insert a child"},
+//   keys: {value: [
+//     {keyCode: 9, ctrlKey:false},
+//     {keyCode: 45}
+//   ]}
+// });
+// MM.coMMand.InsertChild.execute = function() {
+//   var item = MM.App.current;
+//   var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
+//   MM.App.action(action);
+//
+//   MM.coMMand.Edit.execute();
+//
+//   MM.publish("coMMand-child");
+// }
+//
+// MM.coMMand.Delete = Object.create(MM.coMMand, {
+//   label: {value: "Delete an item"},
+//   keys: {value: [
+//     {keyCode: 8, ctrlKey:false},
+//     {keyCode: 46}
+//   ]}
+// });
+// MM.coMMand.Delete.isValid = function() {
+//   return MM.coMMand.isValid.call(this) && !MM.App.current.isRoot();
+// }
+// MM.coMMand.Delete.execute = function() {
+//   var action = new MM.Action.RemoveItem(MM.App.current);
+//   MM.App.action(action);
+// }
 
-  MM.CoMMand.Edit.execute();
-
-  MM.publish("coMMand-sibling");
-}
-
-MM.CoMMand.InsertChild = Object.create(MM.CoMMand, {
-  label: {value: "Insert a child"},
-  keys: {value: [
-    {keyCode: 9, ctrlKey:false},
-    {keyCode: 45}
-  ]}
-});
-MM.CoMMand.InsertChild.execute = function() {
-  var item = MM.App.current;
-  var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
-  MM.App.action(action);
-
-  MM.CoMMand.Edit.execute();
-
-  MM.publish("coMMand-child");
-}
-
-MM.CoMMand.Delete = Object.create(MM.CoMMand, {
-  label: {value: "Delete an item"},
-  keys: {value: [{keyCode: 46}]}
-});
-MM.CoMMand.Delete.isValid = function() {
-  return MM.CoMMand.isValid.call(this) && !MM.App.current.isRoot();
-}
-MM.CoMMand.Delete.execute = function() {
-  var action = new MM.Action.RemoveItem(MM.App.current);
-  MM.App.action(action);
-}
-
-// MM.CoMMand.Swap = Object.create(MM.CoMMand, {
+// MM.coMMand.Swap = Object.create(MM.coMMand, {
 //   label: {value: "Swap sibling"},
 //   keys: {value: [
 //     {keyCode: 38, ctrlKey:true},
 //     {keyCode: 40, ctrlKey:true},
 //   ]}
 // });
-// MM.CoMMand.Swap.execute = function(e) {
+// MM.coMMand.Swap.execute = function(e) {
 //   var current = MM.App.current;
 //   if (current.isRoot() || current.getParent().getChildren().length < 2) { return; }
 
@@ -1833,14 +1837,14 @@ MM.CoMMand.Delete.execute = function() {
 //   MM.App.action(action);
 // }
 
-// MM.CoMMand.Side = Object.create(MM.CoMMand, {
+// MM.coMMand.Side = Object.create(MM.coMMand, {
 //   label: {value: "Change side"},
 //   keys: {value: [
 //     {keyCode: 37, ctrlKey:true},
 //     {keyCode: 39, ctrlKey:true},
 //   ]}
 // });
-// MM.CoMMand.Side.execute = function(e) {
+// MM.coMMand.Side.execute = function(e) {
 //   var current = MM.App.current;
 //   if (current.isRoot() || !current.getParent().isRoot()) { return; }
 
@@ -1849,82 +1853,85 @@ MM.CoMMand.Delete.execute = function() {
 //   MM.App.action(action);
 // }
 
-// MM.CoMMand.Save = Object.create(MM.CoMMand, {
+// MM.coMMand.Save = Object.create(MM.coMMand, {
 //   label: {value: "Save map"},
 //   keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:false}]}
 // });
-// MM.CoMMand.Save.execute = function() {
+// MM.coMMand.Save.execute = function() {
 //   MM.App.io.quickSave();
 // }
 
-// MM.CoMMand.SaveAs = Object.create(MM.CoMMand, {
+// MM.coMMand.SaveAs = Object.create(MM.coMMand, {
 //   label: {value: "Save as&hellip;"},
 //   keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true, shiftKey:true}]}
 // });
-// MM.CoMMand.SaveAs.execute = function() {
+// MM.coMMand.SaveAs.execute = function() {
 //   MM.App.io.show("save");
 // }
 
-// MM.CoMMand.Load = Object.create(MM.CoMMand, {
+// MM.coMMand.Load = Object.create(MM.coMMand, {
 //   label: {value: "Load map"},
 //   keys: {value: [{keyCode: "O".charCodeAt(0), ctrlKey:true}]}
 // });
-// MM.CoMMand.Load.execute = function() {
+// MM.coMMand.Load.execute = function() {
 //   MM.App.io.show("load");
 // }
 
-MM.CoMMand.Center = Object.create(MM.CoMMand, {
+MM.coMMand.Center = Object.create(MM.coMMand, {
   label: {value: "Center map"},
-  keys: {value: [{keyCode: 35}]}
+  keys: {value: [
+    {keyCode: 91},
+    {keyCode: 93}
+  ]}
 });
-MM.CoMMand.Center.execute = function() {
+MM.coMMand.Center.execute = function() {
   MM.App.map.center();
 }
 
-// MM.CoMMand.New = Object.create(MM.CoMMand, {
+// MM.coMMand.New = Object.create(MM.coMMand, {
 //   label: {value: "New map"},
 //   keys: {value: [{keyCode: "N".charCodeAt(0), ctrlKey:true}]}
 // });
-// MM.CoMMand.New.execute = function() {
+// MM.coMMand.New.execute = function() {
 //   if (!confirm("Throw away your current map and start a new one?")) { return; }
 //   var map = new MM.Map();
 //   MM.App.setMap(map);
 //   MM.publish("map-new", this);
 // }
 
-MM.CoMMand.ZoomIn = Object.create(MM.CoMMand, {
+MM.coMMand.ZoomIn = Object.create(MM.coMMand, {
   label: {value: "Zoom in"},
   keys: {value: [{charCode:"+".charCodeAt(0)}]}
 });
-MM.CoMMand.ZoomIn.execute = function() {
+MM.coMMand.ZoomIn.execute = function() {
   MM.App.adjustFontSize(1);
 }
 
-MM.CoMMand.ZoomOut = Object.create(MM.CoMMand, {
+MM.coMMand.ZoomOut = Object.create(MM.coMMand, {
   label: {value: "Zoom out"},
   keys: {value: [{charCode:"-".charCodeAt(0)}]}
 });
-MM.CoMMand.ZoomOut.execute = function() {
+MM.coMMand.ZoomOut.execute = function() {
   MM.App.adjustFontSize(-1);
 }
 
-//   MM.CoMMand.Help = Object.create(MM.CoMMand, {
+//   MM.coMMand.Help = Object.create(MM.coMMand, {
 //   	label: {value: "Show/hide help"},
 //   	keys: {value: [{charCode: "?".charCodeAt(0)}]}
 //   });
-//   MM.CoMMand.Help.execute = function() {
+//   MM.coMMand.Help.execute = function() {
 //   	MM.App.help.toggle();
 //   }
 
-// MM.CoMMand.UI = Object.create(MM.CoMMand, {
+// MM.coMMand.UI = Object.create(MM.coMMand, {
 //   label: {value: "Show/hide UI"},
 //   keys: {value: [{charCode: "*".charCodeAt(0)}]}
 // });
-// MM.CoMMand.UI.execute = function() {
+// MM.coMMand.UI.execute = function() {
 //   MM.App.ui.toggle();
 // }
 
-// MM.CoMMand.Pan = Object.create(MM.CoMMand, {
+// MM.coMMand.Pan = Object.create(MM.coMMand, {
 // 	label: {value: "Pan the map"},
 // 	keys: {value: [
 // 		{keyCode: "W".charCodeAt(0), ctrlKey:false, altKey:false, metaKey:false},
@@ -1934,7 +1941,7 @@ MM.CoMMand.ZoomOut.execute = function() {
 // 	]},
 // 	chars: {value: []}
 // });
-// MM.CoMMand.Pan.execute = function(e) {
+// MM.coMMand.Pan.execute = function(e) {
 // 	var ch = String.fromCharCode(e.keyCode);
 // 	var index = this.chars.indexOf(ch);
 // 	if (index > -1) { return; }
@@ -1948,7 +1955,7 @@ MM.CoMMand.ZoomOut.execute = function() {
 // 	this._step();
 // }
 
-// MM.CoMMand.Pan._step = function() {
+// MM.coMMand.Pan._step = function() {
 // 	var dirs = {
 // 		"W": [0, 1],
 // 		"A": [1, 0],
@@ -1965,7 +1972,7 @@ MM.CoMMand.ZoomOut.execute = function() {
 // 	MM.App.map.moveBy(15*offset[0], 15*offset[1]);
 // }
 
-// MM.CoMMand.Pan.handleEvent = function(e) {
+// MM.coMMand.Pan.handleEvent = function(e) {
 // 	var ch = String.fromCharCode(e.keyCode);
 // 	var index = this.chars.indexOf(ch);
 // 	if (index > -1) {
@@ -1977,7 +1984,21 @@ MM.CoMMand.ZoomOut.execute = function() {
 // 	}
 // }
 
-// MM.CoMMand.Copy = Object.create(MM.CoMMand, {
+MM.coMMand.ShortCuts = Object.create(MM.coMMand, {
+  label: {value: "toggle ShortCuts keyboard"},
+  keys: {value: [
+    {keyCode: 112}
+  ]}
+});
+MM.coMMand.ShortCuts.execute = function() {
+  let tipElement = document.getElementById('tip');
+  if (tipElement.classList.value === 'hidden') {
+    tipElement.classList.remove("hidden");
+  } else {
+    tipElement.classList.add("hidden");
+  }
+}
+// MM.coMMand.Copy = Object.create(MM.coMMand, {
 //   label: {value: "Copy"},
 //   prevent: {value: false},
 //   keys: {value: [
@@ -1985,11 +2006,11 @@ MM.CoMMand.ZoomOut.execute = function() {
 //     {keyCode: "C".charCodeAt(0), metaKey:true}
 //   ]}
 // });
-// MM.CoMMand.Copy.execute = function() {
+// MM.coMMand.Copy.execute = function() {
 //   MM.Clipboard.copy(MM.App.current);
 // }
 
-// MM.CoMMand.Cut = Object.create(MM.CoMMand, {
+// MM.coMMand.Cut = Object.create(MM.coMMand, {
 //   label: {value: "Cut"},
 //   prevent: {value: false},
 //   keys: {value: [
@@ -1997,11 +2018,11 @@ MM.CoMMand.ZoomOut.execute = function() {
 //     {keyCode: "X".charCodeAt(0), metaKey:true}
 //   ]}
 // });
-// MM.CoMMand.Cut.execute = function() {
+// MM.coMMand.Cut.execute = function() {
 //   MM.Clipboard.cut(MM.App.current);
 // }
 
-// MM.CoMMand.Paste = Object.create(MM.CoMMand, {
+// MM.coMMand.Paste = Object.create(MM.coMMand, {
 //   label: {value: "Paste"},
 //   prevent: {value: false},
 //   keys: {value: [
@@ -2009,35 +2030,35 @@ MM.CoMMand.ZoomOut.execute = function() {
 //     {keyCode: "V".charCodeAt(0), metaKey:true}
 //   ]}
 // });
-// MM.CoMMand.Paste.execute = function() {
+// MM.coMMand.Paste.execute = function() {
 //   MM.Clipboard.paste(MM.App.current);
 // }
 
-MM.CoMMand.Fold = Object.create(MM.CoMMand, {
-  label: {value: "Fold/Unfold"},
-  keys:  {value: [{keyCode: 112}]}
-});
-MM.CoMMand.Fold.execute = function() {
-  var item = MM.App.current;
-  if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
-  MM.App.map.ensureItemVisibility(item);
-}
-MM.CoMMand.Edit = Object.create(MM.CoMMand, {
+// MM.coMMand.Fold = Object.create(MM.coMMand, {
+//   label: {value: "Fold/Unfold"},
+//   keys:  {value: [{keyCode: 112}]}
+// });
+// MM.coMMand.Fold.execute = function() {
+//   var item = MM.App.current;
+//   if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
+//   MM.App.map.ensureItemVisibility(item);
+// }
+MM.coMMand.Edit = Object.create(MM.coMMand, {
   label: {value: "Edit item"},
   keys: {value: [
     {keyCode: 113}
   ]}
 });
-MM.CoMMand.Edit.execute = function() {
+MM.coMMand.Edit.execute = function() {
   MM.App.current.startEditing();
   MM.App.editing = true;
 }
 
-MM.CoMMand.Finish = Object.create(MM.CoMMand, {
+MM.coMMand.Finish = Object.create(MM.coMMand, {
   keys: {value: [{keyCode: 13, altKey:false, ctrlKey:false, shiftKey:false}]},
   editMode: {value: true}
 });
-MM.CoMMand.Finish.execute = function() {
+MM.coMMand.Finish.execute = function() {
   MM.App.editing = false;
   var text = MM.App.current.stopEditing();
   if (text) {
@@ -2048,7 +2069,7 @@ MM.CoMMand.Finish.execute = function() {
   MM.App.action(action);
 }
 
-MM.CoMMand.Newline = Object.create(MM.CoMMand, {
+MM.coMMand.Newline = Object.create(MM.coMMand, {
   label: {value: "Line break"},
   keys: {value: [
     {keyCode: 13, shiftKey:true},
@@ -2056,7 +2077,7 @@ MM.CoMMand.Newline = Object.create(MM.CoMMand, {
   ]},
   editMode: {value: true}
 });
-MM.CoMMand.Newline.execute = function() {
+MM.coMMand.Newline.execute = function() {
   var range = getSelection().getRangeAt(0);
   var br = document.createElement("br");
   range.insertNode(br);
@@ -2064,11 +2085,11 @@ MM.CoMMand.Newline.execute = function() {
   MM.App.current.updateSubtree();
 }
 
-MM.CoMMand.Cancel = Object.create(MM.CoMMand, {
+MM.coMMand.Cancel = Object.create(MM.coMMand, {
   editMode: {value: true},
   keys: {value: [{keyCode: 27}]}
 });
-MM.CoMMand.Cancel.execute = function() {
+MM.coMMand.Cancel.execute = function() {
   MM.App.editing = false;
   MM.App.current.stopEditing();
   var oldText = MM.App.current.getText();
@@ -2078,105 +2099,105 @@ MM.CoMMand.Cancel.execute = function() {
   }
 }
 
-MM.CoMMand.Style = Object.create(MM.CoMMand, {
+MM.coMMand.Style = Object.create(MM.coMMand, {
   editMode: {value: null},
   coMMand: {value: ""}
 });
 
-MM.CoMMand.Style.execute = function() {
+MM.coMMand.Style.execute = function() {
   if (MM.App.editing) {
-    document.execCoMMand(this.coMMand, null, null);
+    document.execcoMMand(this.coMMand, null, null);
   } else {
-    MM.CoMMand.Edit.execute();
+    MM.coMMand.Edit.execute();
     var selection = getSelection();
     var range = selection.getRangeAt(0);
     range.selectNodeContents(MM.App.current.getDOM().text);
     selection.removeAllRanges();
     selection.addRange(range);
     this.execute();
-    MM.CoMMand.Finish.execute();
+    MM.coMMand.Finish.execute();
   }
 }
 
-// MM.CoMMand.Bold = Object.create(MM.CoMMand.Style, {
+// MM.coMMand.Bold = Object.create(MM.coMMand.Style, {
 //   coMMand: {value: "bold"},
 //   label: {value: "Bold"},
 //   keys: {value: [{keyCode: "B".charCodeAt(0), ctrlKey:true}]}
 // });
 
-// MM.CoMMand.Underline = Object.create(MM.CoMMand.Style, {
+// MM.coMMand.Underline = Object.create(MM.coMMand.Style, {
 //   coMMand: {value: "underline"},
 //   label: {value: "Underline"},
 //   keys: {value: [{keyCode: "U".charCodeAt(0), ctrlKey:true}]}
 // });
 
-// MM.CoMMand.Italic = Object.create(MM.CoMMand.Style, {
+// MM.coMMand.Italic = Object.create(MM.coMMand.Style, {
 //   coMMand: {value: "italic"},
 //   label: {value: "Italic"},
 //   keys: {value: [{keyCode: "I".charCodeAt(0), ctrlKey:true}]}
 // });
 
-// MM.CoMMand.Strikethrough = Object.create(MM.CoMMand.Style, {
+// MM.coMMand.Strikethrough = Object.create(MM.coMMand.Style, {
 //   coMMand: {value: "strikeThrough"},
 //   label: {value: "Strike-through"},
 //   keys: {value: [{keyCode: "S".charCodeAt(0), ctrlKey:true}]}
 // });
 
-MM.CoMMand.Value = Object.create(MM.CoMMand, {
-  label: {value: "Set status"},
-  keys: {value: [
-    {keyCode: 113, ctrlKey:true}
-  ]}
-});
+// MM.coMMand.Value = Object.create(MM.coMMand, {
+//   label: {value: "Set status"},
+//   keys: {value: [
+//     {keyCode: 113, ctrlKey:true}
+//   ]}
+// });
 
-MM.CoMMand.Value.execute = function() {
-  var item = MM.App.current;
-  var oldValue = item.getValue();
-  var status = prompt("Set item status", oldValue);
-  if (status == null) { return; }
+// MM.coMMand.Value.execute = function() {
+//   var item = MM.App.current;
+//   var oldValue = item.getValue();
+//   var status = prompt("Set item status", oldValue);
+//   if (status == null) { return; }
 
-  if (!status.length) { newValue = null; }
-  //
-  // var numValue = parseFloat(newValue);
-  // var action = new MM.Action.SetValue(item, isNaN(numValue) ? newValue : numValue);
-  // MM.App.action(action);
-  var action = new MM.Action.SetStatus(item, status);
-  MM.App.action(action);
-}
+//   if (!status.length) { newValue = null; }
+//   //
+//   // var numValue = parseFloat(newValue);
+//   // var action = new MM.Action.SetValue(item, isNaN(numValue) ? newValue : numValue);
+//   // MM.App.action(action);
+//   var action = new MM.Action.SetStatus(item, status);
+//   MM.App.action(action);
+// }
 
-// MM.CoMMand.Yes = Object.create(MM.CoMMand, {
+// MM.coMMand.Yes = Object.create(MM.coMMand, {
 //   label: {value: "Yes"},
 //   keys: {value: [{charCode: "y".charCodeAt(0), ctrlKey:false}]}
 // });
-// MM.CoMMand.Yes.execute = function() {
+// MM.coMMand.Yes.execute = function() {
 //   var item = MM.App.current;
 //   var status = (item.getStatus() == "yes" ? null : "yes");
 //   var action = new MM.Action.SetStatus(item, status);
 //   MM.App.action(action);
 // }
 
-// MM.CoMMand.No = Object.create(MM.CoMMand, {
+// MM.coMMand.No = Object.create(MM.coMMand, {
 //   label: {value: "No"},
 //   keys: {value: [{charCode: "n".charCodeAt(0), ctrlKey:false}]}
 // });
-// MM.CoMMand.No.execute = function() {
+// MM.coMMand.No.execute = function() {
 //   var item = MM.App.current;
 //   var status = (item.getStatus() == "no" ? null : "no");
 //   var action = new MM.Action.SetStatus(item, status);
 //   MM.App.action(action);
 // }
 
-// MM.CoMMand.Computed = Object.create(MM.CoMMand, {
+// MM.coMMand.Computed = Object.create(MM.coMMand, {
 //   label: {value: "Computed"},
 //   keys: {value: [{charCode: "c".charCodeAt(0), ctrlKey:false, metaKey:false}]}
 // });
-// MM.CoMMand.Computed.execute = function() {
+// MM.coMMand.Computed.execute = function() {
 //   var item = MM.App.current;
 //   var status = (item.getStatus() == "computed" ? null : "computed");
 //   var action = new MM.Action.SetStatus(item, status);
 //   MM.App.action(action);
 // }
-MM.CoMMand.Select = Object.create(MM.CoMMand, {
+MM.coMMand.Select = Object.create(MM.coMMand, {
   label: {value: "Move selection"},
   keys: {value: [
     {keyCode: 38, ctrlKey:false},
@@ -2185,7 +2206,7 @@ MM.CoMMand.Select = Object.create(MM.CoMMand, {
     {keyCode: 39, ctrlKey:false}
   ]}
 });
-MM.CoMMand.Select.execute = function(e) {
+MM.coMMand.Select.execute = function(e) {
   var dirs = {
     37: "left",
     38: "top",
@@ -2199,21 +2220,21 @@ MM.CoMMand.Select.execute = function(e) {
   MM.App.select(item);
 }
 
-MM.CoMMand.SelectRoot = Object.create(MM.CoMMand, {
+MM.coMMand.SelectRoot = Object.create(MM.coMMand, {
   label: {value: "Select root"},
   keys: {value: [{keyCode: 36}]}
 });
-MM.CoMMand.SelectRoot.execute = function() {
+MM.coMMand.SelectRoot.execute = function() {
   var item = MM.App.current;
   while (!item.isRoot()) { item = item.getParent(); }
   MM.App.select(item);
 }
 
-MM.CoMMand.SelectParent = Object.create(MM.CoMMand, {
+MM.coMMand.SelectParent = Object.create(MM.coMMand, {
   label: {value: "Select parent"},
   keys: {value: [{keyCode: 114}]}
 });
-MM.CoMMand.SelectParent.execute = function() {
+MM.coMMand.SelectParent.execute = function() {
   if (MM.App.current.isRoot()) { return; }
   MM.App.select(MM.App.current.getParent());
 }
@@ -2981,7 +3002,7 @@ MM.Format.JSON.from = function(data) {
 MM.Format.FreeMind = Object.create(MM.Format, {
   id: {value: "freemind"},
   label: {value: "FreeMind"},
-  extension: {value: "MM"},
+  extension: {value: "mm"},
   mime: {value: "application/x-freemind"}
 });
 
@@ -3090,9 +3111,9 @@ MM.Format.FreeMind._parseAttributes = function(node, parent) {
   return json;
 }
 MM.Format.MMA = Object.create(MM.Format.FreeMind, {
-  id: {value: "MMa"},
+  id: {value: "mma"},
   label: {value: "Mind Map Architect"},
-  extension: {value: "MMa"}
+  extension: {value: "mma"}
 });
 
 MM.Format.MMA._parseAttributes = function(node, parent) {
@@ -3341,7 +3362,7 @@ MM.Backend.load = function(name) {
 // MM.Backend.Local = Object.create(MM.Backend, {
 // 	label: {value: "Browser storage"},
 // 	id: {value: "local"},
-// 	prefix: {value: "MM.map."}
+// 	prefix: {value: "mm.map."}
 // });
 
 // MM.Backend.Local.save = function(data, id, name) {
@@ -3853,7 +3874,7 @@ MM.Backend.load = function(name) {
 // 	gapi.auth.authorize({
 // 		"client_id": this.clientId,
 // 		"scope": this.scope,
-// 		"iMMediate": !forceUI
+// 		"immediate": !forceUI
 // 	}, function(token) {
 // 		if (token && !token.error) { /* done */
 // 			promise.fulfill();
@@ -3917,7 +3938,7 @@ MM.UI.prototype.handleEvent = function(e) {
       while (node != document) {
         var coMMand = node.getAttribute("data-coMMand");
         if (coMMand) {
-          MM.CoMMand[coMMand].execute();
+          MM.coMMand[coMMand].execute();
           return;
         }
         node = node.parentNode;
@@ -4035,7 +4056,7 @@ MM.UI.prototype._update = function() {
 // MM.UI.Value.prototype.handleEvent = function(e) {
 // 	var value = this._select.value;
 // 	if (value == "num") {
-// 		MM.CoMMand.Value.execute();
+// 		MM.coMMand.Value.execute();
 // 	} else {
 // 		var action = new MM.Action.SetValue(MM.App.current, value || null);
 // 		MM.App.action(action);
@@ -4179,7 +4200,7 @@ MM.UI.prototype._update = function() {
 //   	var keys = [];
 
 //   	for (var i=1;i<arguments.length;i++) {
-//   		var coMMand = MM.CoMMand[arguments[i]];
+//   		var coMMand = MM.coMMand[arguments[i]];
 //   		labels.push(coMMand.label);
 //   		keys = keys.concat(coMMand.keys.map(this._formatKey, this));
 //   	}
@@ -4202,7 +4223,7 @@ MM.UI.prototype._update = function() {
 //   	return str;
 //   }
 MM.UI.IO = function() {
-  this._prefix = "MM.app.";
+  this._prefix = "mm.app.";
   this._mode = "";
   this._node = document.querySelector("#io");
   // this._heading = this._node.querySelector("h3");
@@ -4349,7 +4370,7 @@ MM.UI.Backend = Object.create(MM.Repo);
 MM.UI.Backend.init = function(select) {
   this._backend = MM.Backend.getById(this.id);
   this._mode = "";
-  this._prefix = "MM.app." + this.id + ".";
+  this._prefix = "mm.app." + this.id + ".";
 
   this._node = document.querySelector("#" + this.id);
 
@@ -4970,54 +4991,52 @@ MM.Mouse = {
   _oldDragState: null,
   _touchTimeout: null,
   _data_dblclick: 0,
-  _processDragNode2: false
+  _processDragNode: false
 }
 
 MM.Mouse.init = function(port) {
-  this._mindmapNodePort = port;
-  this._mindmapNodePort.addEventListener("touchstart", this);
-  this._mindmapNodePort.addEventListener("mousedown", this);
-  // this._mindmapNodePort.addEventListener("click", this);
-  // this._mindmapNodePort.addEventListener("dblclick", this);
-  this._mindmapNodePort.addEventListener("wheel", this);
-  this._mindmapNodePort.addEventListener("mousewheel", this);
-  this._mindmapNodePort.addEventListener("contextmenu", this);
+  this._port = port;
+  this._port.addEventListener("touchstart", this);
+  this._port.addEventListener("mousedown", this);
+  this._port.addEventListener("click", this);
+  // this._port.addEventListener("dblclick", this);
+  this._port.addEventListener("wheel", this);
+  this._port.addEventListener("mousewheel", this);
+  this._port.addEventListener("contextmenu", this);
 }
 
 MM.Mouse.handleEvent = function(e) {
   switch (e.type) {
-    // case "click":
-    //   console.log("click MM.Mouse")
-    //   // When not dragging a node
-    //   if (this._processDragNode2 == false) {
-    //     // Wait 300ms for potential double click
-    //     setTimeout(function () {
-    //       // If it's a double click
-    //       if (this._data_dblclick == 1) {
-    //         // Doing nothing
-    //       // If it's a single click
-    //       } else {
-    //         // Triggers selectNode event
-    //         var item = MM.App.map.getItemFor(e.target);
-    //         if (MM.App.editing && item == MM.App.current) { return; } /* ignore on edited node */
-    //         if (item) {
-    //           MM.App.select(item);
-    //           MM.App.map.selectNode(item);
-    //         }
-    //       }
-    //     }, 300);
-    //   // When dragging a node
-    //   } else {
-    //     this._processDragNode2 = false;
-    //   }
-    // break;
-    //
-    // case "dblclick":
-    //   console.log("dblclick MM.Mouse")
-    //   var item = MM.App.map.getItemFor(e.target);
-    //   if (item) { MM.CoMMand.Edit.execute(); }
-    //   this._data_dblclick = 1
-    // break;
+    case "click":
+      // When not dragging a node
+      if (this._processDragNode == false) {
+        // Wait 300ms for potential double click
+        setTimeout(function () {
+          // If it's a double click
+          if (this._data_dblclick == 1) {
+            // Doing nothing
+          // If it's a single click
+          } else {
+            // Triggers selectNode event
+            var item = MM.App.map.getItemFor(e.target);
+            if (MM.App.editing && item == MM.App.current) { return; } /* ignore on edited node */
+            if (item && item == MM.App.current) {
+              MM.App.map.selectNode(item);
+            }
+            MM.App.select(item);
+          }
+        }, 200);
+      // When dragging a node
+      } else {
+        this._processDragNode = false;
+      }
+    break;
+
+    case "dblclick":
+      var item = MM.App.map.getItemFor(e.target);
+      if (item) { MM.coMMand.Edit.execute(); }
+      this._data_dblclick = 1
+    break;
 
     case "contextmenu":
       this._endDrag();
@@ -5026,7 +5045,7 @@ MM.Mouse.handleEvent = function(e) {
       var item = MM.App.map.getItemFor(e.target);
       item && MM.App.select(item);
 
-      MM.Menu.open(e.clientX, e.clientY);
+//       MM.Menu.open(e.clientX, e.clientY);
     break;
 
     case "touchstart":
@@ -5034,10 +5053,11 @@ MM.Mouse.handleEvent = function(e) {
       e.clientX = e.touches[0].clientX;
       e.clientY = e.touches[0].clientY;
     case "mousedown":
+      console.log("mousedown")
       var item = MM.App.map.getItemFor(e.target);
       if (MM.App.editing) {
         if (item == MM.App.current) { return; } /* ignore dnd on edited node */
-        MM.CoMMand.Finish.execute(); /* clicked elsewhere => finalize edit */
+        MM.coMMand.Finish.execute(); /* clicked elsewhere => finalize edit */
       }
 
       if (e.type == "mousedown") { e.preventDefault(); } /* to prevent blurring the clipboard node */
@@ -5045,7 +5065,7 @@ MM.Mouse.handleEvent = function(e) {
       if (e.type == "touchstart") { /* context menu here, after we have the item */
         this._touchTimeout = setTimeout(function() {
           item && MM.App.select(item);
-          MM.Menu.open(e.clientX, e.clientY);
+//           MM.Menu.open(e.clientX, e.clientY);
         }, this.TOUCH_DELAY);
       }
 
@@ -5053,23 +5073,27 @@ MM.Mouse.handleEvent = function(e) {
     break;
 
     case "touchmove":
+      console.log("mousedown")
       if (e.touches.length > 1) { return; }
       e.clientX = e.touches[0].clientX;
       e.clientY = e.touches[0].clientY;
       clearTimeout(this._touchTimeout);
     case "mousemove":
-      this._processDragNode2 = true
+      console.log("mousemove")
+      this._processDragNode = true
       this._processDrag(e);
     break;
 
     case "touchend":
       clearTimeout(this._touchTimeout);
     case "mouseup":
+      console.log("mouseup")
       this._endDrag();
     break;
 
     case "wheel":
     case "mousewheel":
+      console.log("mousewheel")
       var dir = 0;
       if (e.wheelDelta) {
         if (e.wheelDelta < 0) {
@@ -5096,11 +5120,11 @@ MM.Mouse._startDrag = function(e, item) {
 
   if (e.type == "mousedown") {
     e.preventDefault(); /* no selections allowed. only for mouse; preventing touchstart would prevent Safari from emulating clicks */
-    this._mindmapNodePort.addEventListener("mousemove", this);
-    this._mindmapNodePort.addEventListener("mouseup", this);
+    this._port.addEventListener("mousemove", this);
+    this._port.addEventListener("mouseup", this);
   } else {
-    this._mindmapNodePort.addEventListener("touchmove", this);
-    this._mindmapNodePort.addEventListener("touchend", this);
+    this._port.addEventListener("touchmove", this);
+    this._port.addEventListener("touchend", this);
   }
 
   this._cursor[0] = e.clientX;
@@ -5111,7 +5135,7 @@ MM.Mouse._startDrag = function(e, item) {
     this._item = item;
   } else {
     this._mode = "pan";
-    this._mindmapNodePort.style.cursor = "move";
+    this._port.style.cursor = "move";
   }
 }
 
@@ -5124,27 +5148,30 @@ MM.Mouse._processDrag = function(e) {
 
   switch (this._mode) {
     case "drag":
-      if (!this._ghost) {
-        this._mindmapNodePort.style.cursor = "move";
-        this._buildGhost(dx, dy);
-      }
-      this._moveGhost(dx, dy);
-      var state = this._computeDragState();
-      this._visualizeDragState(state);
+      // console.log("drag")
+      // if (!this._ghost) {
+      //   this._port.style.cursor = "move";
+      //   this._buildGhost(dx, dy);
+      //   console.log("ghost")
+      // }
+      // this._moveGhost(dx, dy);
+      // var state = this._computeDragState();
+      // this._visualizeDragState(state);
     break;
 
     case "pan":
+      console.log("pan")
       MM.App.map.moveBy(dx, dy);
     break;
   }
 }
 
 MM.Mouse._endDrag = function() {
-  this._mindmapNodePort.style.cursor = "";
-  this._mindmapNodePort.removeEventListener("mousemove", this);
-  this._mindmapNodePort.removeEventListener("mouseup", this);
+  this._port.style.cursor = "";
+  this._port.removeEventListener("mousemove", this);
+  this._port.removeEventListener("mouseup", this);
 
-  if (this._mode == "pan") { return; } /* no cleanup after panning */
+  // if (this._mode == "pan") { return; } /* no cleanup after panning */
 
   if (this._ghost) {
     var state = this._computeDragState();
@@ -5298,12 +5325,12 @@ setInterval(function() {
  * 3) Editing mode (2b) can be ended by multiple ways:
  *   3a) By calling current.stopEditing();
  *       this shall be followed by some resolution.
- *   3b) By executing MM.CoMMand.{Finish,Cancel};
+ *   3b) By executing MM.coMMand.{Finish,Cancel};
  *       these call 3a internally.
  *   3c) By blurring the item itself (by selecting another);
- *       this calls MM.CoMMand.Finish (3b).
+ *       this calls MM.coMMand.Finish (3b).
  *   3b) By blurring the currentElement;
- *       this calls MM.CoMMand.Finish (3b).
+ *       this calls MM.coMMand.Finish (3b).
  *
  */
 MM.App = {
@@ -5345,18 +5372,20 @@ MM.App = {
     this.historyIndex = 0;
 
     this.map = map;
-    this.map.show(this._mindmapNodePort);
+    this.map.show(this._port);
   },
 
   select: function(item) {
+    if (item) {
     if (this.current && this.current != item) { this.current.deselect(); }
-    this.current = item;
-    this.current.select();
+      this.current = item;
+      this.current.select();
+    }
   },
 
   adjustFontSize: function(diff) {
     this._fontSize = Math.max(30, this._fontSize + 10*diff);
-    this._mindmapNodePort.style.fontSize = this._fontSize + "%";
+    this._port.style.fontSize = this._fontSize + "%";
     this.map.update();
     this.map.ensureItemVisibility(this.current);
   },
@@ -5407,17 +5436,17 @@ MM.App = {
   },
 
   init: function(rootNodeName="root", port="#port_node", throbber="#throbber") {
-    this._mindmapNodePort = document.querySelector(port);
+    this._port = document.querySelector(port);
     this._throbber = document.querySelector(throbber);
     this.ui = new MM.UI();
     this.io = new MM.UI.IO();
-    // this.help = new MM.UI.Help();
+//   		this.help = new MM.UI.Help();
 
     MM.Tip.init();
-    // MM.Keyboard.init();
-    // MM.Menu.init(this._mindmapNodePort);
-    MM.Mouse.init(this._mindmapNodePort);
-    // MM.Clipboard.init();
+    MM.Keyboard.init();
+//     MM.Menu.init(this._port);
+    MM.Mouse.init(this._port);
+    MM.Clipboard.init();
 
     window.addEventListener("resize", this);
     window.addEventListener("beforeunload", this);
@@ -5435,9 +5464,9 @@ MM.App = {
   },
 
   _syncPort: function() {
-    this.portSize = [window.innerWidth - this.ui.getWidth(), window.innerHeight];
-    this._mindmapNodePort.style.width = this.portSize[0] + "px";
-    this._mindmapNodePort.style.height = this.portSize[1] + "px";
+    this.portSize = [1800, 300];
+    this._port.style.width = 1800 + "px";
+    this._port.style.height = 300 + "px";
     this._throbber.style.right = (20 + this.ui.getWidth())+ "px";
     if (this.map) { this.map.ensureItemVisibility(this.current); }
   }
